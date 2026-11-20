@@ -1,0 +1,1 @@
+{"version":1,"defects":{"Tests\\Feature\\ExampleTest::testBasicTest":3},"times":{"Tests\\Unit\\ExampleTest::testBasicTest":0.019,"Tests\\Feature\\ExampleTest::testBasicTest":0.21,"Tests\\Unit\\EnsurePersistentSessionTest::test_array_sessions_fall_back_to_file_sessions_for_web_requests":0.048}}

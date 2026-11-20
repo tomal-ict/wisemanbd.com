@@ -1,0 +1,4 @@
+[05-Oct-2026 13:34:34 UTC] PHP Fatal error:  Uncaught Error: Class "Illuminate\Database\Eloquent\Model" not found in /home/wisemanbdpro/public_html/app/ManualPaymentMethod.php:7
+Stack trace:
+#0 {main}
+  thrown in /home/wisemanbdpro/public_html/app/ManualPaymentMethod.php on line 7
