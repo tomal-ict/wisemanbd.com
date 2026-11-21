@@ -1,3 +1,7 @@
+<div class="topbar-delivery text-center text-white font-weight-500 py-2" style="background:#2a0f45;font-size:12px;letter-spacing:.3px;font-family:'Inter',system-ui,sans-serif;">
+    Delivery all over Bangladesh &nbsp;·&nbsp; Cash on Delivery &nbsp;·&nbsp; Easy Exchange
+</div>
+
 @if(get_setting('topbar_banner') != null)
 <div class="position-relative top-banner removable-session z-1035 d-none" data-key="top-banner" data-value="removed">
     <a href="{{ get_setting('topbar_banner_link') }}" class="d-block text-reset">

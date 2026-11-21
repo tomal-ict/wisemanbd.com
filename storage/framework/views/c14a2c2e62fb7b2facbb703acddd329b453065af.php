@@ -1,210 +1,329 @@
-﻿<section class="bg-dark py-5 text-light footer-widget">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-5 col-xl-4 text-center text-md-left">
-                <div class="mt-4">
-                    <a href="<?php echo e(route('home')); ?>" class="d-block">
+<!-- WISEMAN LUXURY FOOTER -->
+<style>
+.wiseman-footer {
+    --navy: #2a0f45;
+    --navyink: #3b2557;
+    --f2: #ece3f6;
+    --f3: #e2d6f0;
+    --p: #6a2c9e;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--navyink);
+}
+.wiseman-footer .foot {
+    background: var(--f2);
+    color: var(--navyink);
+    padding: 48px 0 42px;
+}
+.wiseman-footer .wrap {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 clamp(16px, 2.4vw, 40px);
+}
+.wiseman-footer .fgrid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1.25fr;
+    gap: 40px;
+}
+.wiseman-footer .fgrid h4 {
+    font-size: 17px;
+    letter-spacing: .4px;
+    color: var(--navy);
+    font-weight: 700;
+    margin-bottom: 22px;
+    padding-bottom: 6px;
+    position: relative;
+}
+.wiseman-footer .fgrid h4:after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    width: 34px;
+    height: 2px;
+    background: var(--navy);
+}
+.wiseman-footer .fgrid ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.wiseman-footer .fgrid li {
+    font-size: 14.5px;
+    margin-bottom: 12px;
+    color: var(--navyink);
+}
+.wiseman-footer .fgrid li a {
+    color: inherit;
+    text-decoration: none;
+    transition: .2s;
+}
+.wiseman-footer .fgrid li a:hover {
+    color: var(--p);
+    text-decoration: underline;
+}
+.wiseman-footer .brand .logo img {
+    height: 42px;
+    width: auto;
+    mix-blend-mode: multiply;
+}
+.wiseman-footer .brand .tag {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    color: var(--navyink);
+    font-size: 24px;
+    margin: 12px 0 10px;
+    font-weight: 600;
+}
+.wiseman-footer .brand p {
+    color: var(--navyink);
+    font-size: 14px;
+    max-width: 380px;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+.wiseman-footer .social {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 20px;
+    font-size: 14.5px;
+    color: var(--navy);
+}
+.wiseman-footer .social b {
+    font-weight: 600;
+    margin-right: 2px;
+}
+.wiseman-footer .social a {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1.5px solid var(--navy);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--navy);
+    transition: .2s;
+}
+.wiseman-footer .social a:hover {
+    background: var(--navy);
+    color: #fff;
+}
+.wiseman-footer .crow {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 18px;
+    font-size: 14px;
+    color: var(--navyink);
+}
+.wiseman-footer .crow .ci {
+    color: var(--navy);
+    margin-top: 2px;
+    flex: none;
+}
+.wiseman-footer .crow b {
+    display: block;
+    font-weight: 700;
+    color: var(--navy);
+    font-size: 14.5px;
+}
+.wiseman-footer .crow div span {
+    display: block;
+}
+.wiseman-footer .accept {
+    background: var(--f3);
+    border-top: 1px solid #d3c5e6;
+    padding: 16px 0;
+}
+.wiseman-footer .acin {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.wiseman-footer .pay {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.wiseman-footer .pay > span {
+    font-size: 13.5px;
+    letter-spacing: 1.5px;
+    color: var(--navy);
+    margin-right: 8px;
+    font-weight: 600;
+}
+.wiseman-footer .pay img {
+    height: 36px;
+    width: auto;
+    border-radius: 6px;
+    display: block;
+    background: #fff;
+    padding: 3px 6px;
+    border: 1px solid #e0d5ec;
+}
+.wiseman-footer .plinks {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+.wiseman-footer .plinks a {
+    border: 0;
+    padding: 0 16px;
+    color: var(--navyink);
+    font-size: 13.5px;
+    border-left: 1.5px solid #a392b8;
+    text-decoration: none;
+    font-weight: 500;
+}
+.wiseman-footer .plinks a:first-child {
+    border-left: 0;
+}
+.wiseman-footer .plinks a:last-child {
+    padding-right: 0;
+}
+.wiseman-footer .copy-bottom {
+    background: var(--navy);
+    color: #fff;
+    font-size: 13.5px;
+    padding: 18px 0;
+}
+.wiseman-footer .copy-bottom .wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+@media (max-width: 820px) {
+    .wiseman-footer .fgrid {
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+    }
+    .wiseman-footer .acin, .wiseman-footer .copy-bottom .wrap {
+        flex-direction: column;
+        text-align: center;
+        justify-content: center;
+    }
+}
+@media (max-width: 560px) {
+    .wiseman-footer .fgrid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+}
+</style>
+
+<div class="wiseman-footer">
+    <footer class="foot">
+        <div class="wrap">
+            <div class="fgrid">
+                <div class="brand">
+                    <a class="logo" href="<?php echo e(route('home')); ?>">
                         <?php if(get_setting('footer_logo') != null): ?>
-                            <img class="lazyload" src="<?php echo e(static_asset('assets/img/placeholder-rect.jpg')); ?>" data-src="<?php echo e(uploaded_asset(get_setting('footer_logo'))); ?>" alt="<?php echo e(env('APP_NAME')); ?>" height="44">
+                            <img src="<?php echo e(uploaded_asset(get_setting('footer_logo'))); ?>" alt="<?php echo e(env('APP_NAME')); ?>">
+                        <?php elseif(get_setting('header_logo') != null): ?>
+                            <img src="<?php echo e(uploaded_asset(get_setting('header_logo'))); ?>" alt="<?php echo e(env('APP_NAME')); ?>">
                         <?php else: ?>
-                            <img class="lazyload" src="<?php echo e(static_asset('assets/img/placeholder-rect.jpg')); ?>" data-src="<?php echo e(static_asset('assets/img/logo.png')); ?>" alt="<?php echo e(env('APP_NAME')); ?>" height="44">
+                            <img src="<?php echo e(static_asset('assets/img/wiseman/logo.png')); ?>" alt="<?php echo e(env('APP_NAME')); ?>">
                         <?php endif; ?>
                     </a>
-                    <div class="my-3">
-                        <?php echo get_setting('about_us_description',null,App::getLocale()); ?>
-
-                    </div>
-                    <div class="d-inline-block d-md-block mb-4">
-                        <form class="form-inline" method="POST" action="<?php echo e(route('subscribers.store')); ?>">
-                            <?php echo csrf_field(); ?>
-                            <div class="form-group mb-0">
-                                <input type="email" class="form-control" placeholder="<?php echo e(translate('Your Email Address')); ?>" name="email" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary">
-                                <?php echo e(translate('Subscribe')); ?>
-
-                            </button>
-                        </form>
-                    </div>
-                    <div class="w-300px mw-100 mx-auto mx-md-0">
-                        <?php if(get_setting('show_play_store', 'on') == 'on' && get_setting('play_store_link') != null): ?>
-                            <a href="<?php echo e(get_setting('play_store_link')); ?>" target="_blank" class="d-inline-block mr-3 ml-0">
-                                <img src="<?php echo e(static_asset('assets/img/play.png')); ?>" class="mx-100 h-40px">
+                    <div class="tag">Crafted for the Wise.</div>
+                    <p>High-end menswear made with better fabrics and finer finishing. Quality you can feel in every detail.</p>
+                    <div class="social">
+                        <b>Get in touch:</b>
+                        <?php if(get_setting('facebook_link') != null): ?>
+                            <a href="<?php echo e(get_setting('facebook_link')); ?>" target="_blank" rel="noopener" aria-label="Facebook">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M13.5 21v-7.6h2.6l.4-3h-3V8.5c0-.9.3-1.5 1.5-1.5h1.6V4.3c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 3.9v2.3H8v3h2.5V21h3z"/></svg>
                             </a>
                         <?php endif; ?>
-                        <?php if(get_setting('show_app_store', 'on') == 'on' && get_setting('app_store_link') != null): ?>
-                            <a href="<?php echo e(get_setting('app_store_link')); ?>" target="_blank" class="d-inline-block">
-                                <img src="<?php echo e(static_asset('assets/img/app.png')); ?>" class="mx-100 h-40px">
+                        <?php if(get_setting('instagram_link') != null): ?>
+                            <a href="<?php echo e(get_setting('instagram_link')); ?>" target="_blank" rel="noopener" aria-label="Instagram">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none"/></svg>
+                            </a>
+                        <?php endif; ?>
+                        <?php if(get_setting('youtube_link') != null): ?>
+                            <a href="<?php echo e(get_setting('youtube_link')); ?>" target="_blank" rel="noopener" aria-label="YouTube">
+                                <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2C2 8.8 2 12 2 12s0 3.2.4 4.8a2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8c.4-1.6.4-4.8.4-4.8s0-3.2-.4-4.8zM10 15V9l5.2 3-5.2 3z"/></svg>
                             </a>
                         <?php endif; ?>
                     </div>
                 </div>
-            </div>
-            <div class="col-lg-3 ml-xl-auto col-md-4 mr-0">
-                <div class="text-center text-md-left mt-4">
-                    <h4 class="fs-13 text-uppercase fw-600 border-bottom border-gray-900 pb-2 mb-4">
-                        <?php echo e(translate('Contact Info')); ?>
 
-                    </h4>
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                           <span class="d-block opacity-30"><?php echo e(translate('Address')); ?>:</span>
-                           <span class="d-block opacity-70"><?php echo e(get_setting('contact_address',null,App::getLocale())); ?></span>
-                        </li>
-                        <li class="mb-2">
-                           <span class="d-block opacity-30"><?php echo e(translate('Phone')); ?>:</span>
-                           <span class="d-block opacity-70"><?php echo e(get_setting('contact_phone')); ?></span>
-                        </li>
-                        <li class="mb-2">
-                           <span class="d-block opacity-30"><?php echo e(translate('Email')); ?>:</span>
-                           <span class="d-block opacity-70">
-                               <a href="mailto:<?php echo e(get_setting('contact_email')); ?>" class="text-reset"><?php echo e(get_setting('contact_email')); ?></a>
-                            </span>
-                        </li>
+                <div>
+                    <h4>COMPANY</h4>
+                    <ul>
+                        <li><a href="<?php echo e(url('/about-us')); ?>">About WISEMAN</a></li>
+                        <li><a href="<?php echo e(url('/our-showroom')); ?>">Our Showroom</a></li>
+                        <li><a href="<?php echo e(url('/become-a-reseller')); ?>">Become a Reseller</a></li>
+                        <li><a href="<?php echo e(url('/careers')); ?>">Careers</a></li>
+                        <li><a href="tel:<?php echo e(get_setting('contact_phone', '+8801811762186')); ?>">Contact Us</a></li>
                     </ul>
                 </div>
-            </div>
-            <div class="col-lg-2 col-md-4">
-                <div class="text-center text-md-left mt-4">
-                    <h4 class="fs-13 text-uppercase fw-600 border-bottom border-gray-900 pb-2 mb-4">
-                        <?php echo e(get_setting('widget_one',null,App::getLocale())); ?>
 
-                    </h4>
-                    <ul class="list-unstyled">
-                        <?php if( get_setting('widget_one_labels',null,App::getLocale()) !=  null ): ?>
-                            <?php $__currentLoopData = json_decode( get_setting('widget_one_labels',null,App::getLocale()), true); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $value): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                            <li class="mb-2">
-                                <a href="<?php echo e(json_decode( get_setting('widget_one_links'), true)[$key]); ?>" class="opacity-50 hov-opacity-100 text-reset">
-                                    <?php echo e($value); ?>
-
-                                </a>
-                            </li>
-                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                        <?php endif; ?>
+                <div>
+                    <h4>HELP</h4>
+                    <ul>
+                        <li><a href="<?php echo e(route('orders.track')); ?>">Track Your Order</a></li>
+                        <li><a href="<?php echo e(url('/delivery-info')); ?>">Delivery Information</a></li>
+                        <li><a href="<?php echo e(url('/returnpolicy')); ?>">Exchange &amp; Return</a></li>
+                        <li><a href="<?php echo e(url('/size-guide')); ?>">Size Guide</a></li>
+                        <li><a href="<?php echo e(url('/faq')); ?>">FAQ</a></li>
                     </ul>
                 </div>
-            </div>
 
-            <div class="col-md-4 col-lg-2">
-                <div class="text-center text-md-left mt-4">
-                    <h4 class="fs-13 text-uppercase fw-600 border-bottom border-gray-900 pb-2 mb-4">
-                        <?php echo e(translate('My Account')); ?>
-
-                    </h4>
-                    <ul class="list-unstyled">
-                        <?php if(Auth::check()): ?>
-                            <li class="mb-2">
-                                <a class="opacity-50 hov-opacity-100 text-reset" href="<?php echo e(route('logout')); ?>">
-                                    <?php echo e(translate('Logout')); ?>
-
-                                </a>
-                            </li>
-                        <?php else: ?>
-                            <?php if(get_setting('show_my_panel') == 'on'): ?>
-                            <li class="mb-2">
-                                <a class="opacity-50 hov-opacity-100 text-reset" href="<?php echo e(route('user.login')); ?>">
-                                    <?php echo e(translate('Login')); ?>
-
-                                </a>
-                            </li>
-                            <?php endif; ?>
-                        <?php endif; ?>
-                        <li class="mb-2">
-                            <a class="opacity-50 hov-opacity-100 text-reset" href="<?php echo e(route('purchase_history.index')); ?>">
-                                <?php echo e(translate('Order History')); ?>
-
-                            </a>
-                        </li>
-                        <li class="mb-2">
-                            <a class="opacity-50 hov-opacity-100 text-reset" href="<?php echo e(route('wishlists.index')); ?>">
-                                <?php echo e(translate('My Wishlist')); ?>
-
-                            </a>
-                        </li>
-                        <li class="mb-2">
-                            <a class="opacity-50 hov-opacity-100 text-reset" href="<?php echo e(route('orders.track')); ?>">
-                                <?php echo e(translate('Track Order')); ?>
-
-                            </a>
-                        </li>
-                        <?php if(addon_is_activated('affiliate_system')): ?>
-                            <li class="mb-2">
-                                <a class="opacity-50 hov-opacity-100 text-light" href="<?php echo e(route('affiliate.apply')); ?>"><?php echo e(translate('Be an affiliate partner')); ?></a>
-                            </li>
-                        <?php endif; ?>
-                    </ul>
-                </div>
-                <?php if(get_setting('vendor_system_activation') == 1): ?>
-                    <div class="text-center text-md-left mt-4">
-                        <h4 class="fs-13 text-uppercase fw-600 border-bottom border-gray-900 pb-2 mb-4">
-                            <?php echo e(translate('Be a Seller')); ?>
-
-                        </h4>
-                        <a href="<?php echo e(route('shops.create')); ?>" class="btn btn-primary btn-sm shadow-md">
-                            <?php echo e(translate('Apply Now')); ?>
-
-                        </a>
+                <div class="contact">
+                    <h4>CONTACT</h4>
+                    <div class="crow">
+                        <span class="ci"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.6a1 1 0 0 1-.25 1z"/></svg></span>
+                        <div>Call / WhatsApp<b><?php echo e(get_setting('contact_phone', '+8801811762186')); ?></b></div>
                     </div>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- FOOTER -->
-<footer class="pt-3 pb-7 pb-xl-3 bg-black text-light">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-4">
-                <div class="text-center text-md-left" current-verison="<?php echo e(get_setting("current_version")); ?>">
-                    All Rights Reserved By A1systems BD
-                </div>
-            </div>
-            <div class="col-lg-4">
-                <?php if( get_setting('show_social_links') ): ?>
-                <ul class="list-inline my-3 my-md-0 social colored text-center">
-                    <?php if( get_setting('facebook_link') !=  null ): ?>
-                    <li class="list-inline-item">
-                        <a href="<?php echo e(get_setting('facebook_link')); ?>" target="_blank" class="facebook"><i class="lab la-facebook-f"></i></a>
-                    </li>
-                    <?php endif; ?>
-                    <?php if( get_setting('twitter_link') !=  null ): ?>
-                    <li class="list-inline-item">
-                        <a href="<?php echo e(get_setting('twitter_link')); ?>" target="_blank" class="twitter"><i class="lab la-twitter"></i></a>
-                    </li>
-                    <?php endif; ?>
-                    <?php if( get_setting('instagram_link') !=  null ): ?>
-                    <li class="list-inline-item">
-                        <a href="<?php echo e(get_setting('instagram_link')); ?>" target="_blank" class="instagram"><i class="lab la-instagram"></i></a>
-                    </li>
-                    <?php endif; ?>
-                    <?php if( get_setting('youtube_link') !=  null ): ?>
-                    <li class="list-inline-item">
-                        <a href="<?php echo e(get_setting('youtube_link')); ?>" target="_blank" class="youtube"><i class="lab la-youtube"></i></a>
-                    </li>
-                    <?php endif; ?>
-                    <?php if( get_setting('linkedin_link') !=  null ): ?>
-                    <li class="list-inline-item">
-                        <a href="<?php echo e(get_setting('linkedin_link')); ?>" target="_blank" class="linkedin"><i class="lab la-linkedin-in"></i></a>
-                    </li>
-                    <?php endif; ?>
-                </ul>
-                <?php endif; ?>
-            </div>
-            <div class="col-lg-4">
-                <div class="text-center text-md-right">
-                    <ul class="list-inline mb-0">
-                                <li class="list-inline-item">
-<span style="color: white;">&nbsp;Website Designed By: <a href="https://tomal-ict.com" target="_blank"><span style="color: white;">Tomal Krishna Howlader</span></a></span>
-                                </li>
-            
-                    </ul>
+                    <div class="crow">
+                        <span class="ci"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M3 5h18a1 1 0 0 1 1 1v.5l-10 6.5L2 6.5V6a1 1 0 0 1 1-1zm19 3.9V18a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V8.9l10 6.5z"/></svg></span>
+                        <div>Email<b><?php echo e(get_setting('contact_email', 'info@wisemanbd.com')); ?></b></div>
+                    </div>
+                    <div class="crow">
+                        <span class="ci"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+                        <div>Open Hours<span>10:00 AM – 8:00 PM</span></div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</footer>
+    </footer>
 
+    <div class="accept">
+        <div class="wrap acin">
+            <div class="pay">
+                <span>WE ACCEPT</span>
+                <img src="<?php echo e(static_asset('assets/img/wiseman/bkash.png')); ?>" alt="bKash">
+                <img src="<?php echo e(static_asset('assets/img/wiseman/nagad.png')); ?>" alt="Nagad">
+                <img src="<?php echo e(static_asset('assets/img/wiseman/visa.png')); ?>" alt="Visa">
+                <img src="<?php echo e(static_asset('assets/img/wiseman/mastercard.png')); ?>" alt="Mastercard">
+            </div>
+            <nav class="plinks">
+                <a href="<?php echo e(url('/privacypolicy')); ?>">Privacy Policy</a>
+                <a href="<?php echo e(url('/terms')); ?>">Terms &amp; Conditions</a>
+                <a href="<?php echo e(url('/returnpolicy')); ?>">Refund Policy</a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- BOTTOM COPYRIGHT & DEVELOPER BAR -->
+    <div class="copy-bottom">
+        <div class="wrap">
+            <div class="text-left" current-verison="<?php echo e(get_setting('current_version')); ?>">
+                All Rights Reserved By A1systems BD
+            </div>
+            <div class="text-right">
+                <span>Website Designed By: <a href="https://tomal-ict.com" target="_blank" rel="noopener" style="color: #fff; text-decoration: underline; font-weight: 600;">Tomal Krishna Howlader</a></span>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="aiz-mobile-bottom-nav d-xl-none fixed-bottom bg-white shadow-lg border-top rounded-top" style="box-shadow: 0px -1px 10px rgb(0 0 0 / 15%)!important; ">
     <div class="row align-items-center gutters-5">
