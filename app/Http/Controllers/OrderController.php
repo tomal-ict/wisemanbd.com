@@ -300,8 +300,12 @@ class OrderController extends Controller
     {
 
              if(Auth::user()){
-                   $carts = Cart::where('user_id', Auth::user()->id)
-            ->get();
+            $buy_now_cart_id = $request->input('buy_now_cart_id') ?: $request->session()->get('buy_now_cart_id');
+            if ($buy_now_cart_id) {
+                $carts = Cart::where('id', $buy_now_cart_id)->get();
+            } else {
+                $carts = Cart::where('user_id', Auth::user()->id)->get();
+            }
          
 
         if ($carts->isEmpty()) {
@@ -498,8 +502,12 @@ class OrderController extends Controller
          // $tempid=Cart::select('temp_user_id')->get();
         // $tempids=$tempid->temp_user_id;
         $temp_user_id = $request->session()->get('temp_user_id');
-        $carts = Cart::where('temp_user_id',$temp_user_id)
-            ->get();
+        $buy_now_cart_id = $request->input('buy_now_cart_id') ?: $request->session()->get('buy_now_cart_id');
+        if ($buy_now_cart_id) {
+            $carts = Cart::where('id', $buy_now_cart_id)->get();
+        } else {
+            $carts = Cart::where('temp_user_id', $temp_user_id)->get();
+        }
               $cat= $carts->count();
         if ($carts->isEmpty()) {
             flash(translate('Your cart is empty'))->warning();
@@ -574,12 +582,20 @@ class OrderController extends Controller
             }
 
             // Move the guest cart to the customer account
-            Cart::where('temp_user_id', $temp_user_id)
-                ->update([
-                    'user_id' => $guest_user->id,
-                    'temp_user_id' => null
-                ]);
-            Session::forget('temp_user_id');
+            if ($buy_now_cart_id) {
+                Cart::where('id', $buy_now_cart_id)
+                    ->update([
+                        'user_id' => $guest_user->id,
+                        'temp_user_id' => null
+                    ]);
+            } else {
+                Cart::where('temp_user_id', $temp_user_id)
+                    ->update([
+                        'user_id' => $guest_user->id,
+                        'temp_user_id' => null
+                    ]);
+                Session::forget('temp_user_id');
+            }
         }
 
         // $address = Address::where('id', $carts[0]['address_id'])->first();

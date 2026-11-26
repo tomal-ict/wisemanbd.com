@@ -1,6 +1,28 @@
-<div class="topbar-delivery text-center text-white font-weight-500 py-2" style="background:#2a0f45;font-size:12px;letter-spacing:.3px;font-family:'Inter',system-ui,sans-serif;">
-    Delivery all over Bangladesh &nbsp;·&nbsp; Cash on Delivery &nbsp;·&nbsp; Easy Exchange
+<div class="topbar-delivery position-relative text-white font-weight-500 py-2" id="topbarDelivery" style="background:#2a0f45;font-size:12px;letter-spacing:.3px;font-family:'Inter',system-ui,sans-serif;padding-left:36px;padding-right:36px;text-align:center;">
+    <div class="topbar-delivery-content d-inline-block">
+        <span>Delivery all over Bangladesh</span> <span class="d-inline-block px-1">·</span> <span>Cash on Delivery</span> <span class="d-inline-block px-1">·</span> <span>Easy Exchange</span>
+    </div>
+    <button type="button" class="topbar-delivery-close" onclick="closeTopbarDelivery()" aria-label="Close" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:transparent;border:0;color:#ffffff;opacity:0.85;cursor:pointer;padding:4px 8px;font-size:16px;line-height:1;display:flex;align-items:center;">
+        <i class="las la-times"></i>
+    </button>
 </div>
+<script>
+    function closeTopbarDelivery() {
+        var el = document.getElementById('topbarDelivery');
+        if (el) {
+            el.style.display = 'none';
+            try { sessionStorage.setItem('topbar_delivery_closed', '1'); } catch(e) {}
+        }
+    }
+    (function(){
+        try {
+            if (sessionStorage.getItem('topbar_delivery_closed') === '1') {
+                var el = document.getElementById('topbarDelivery');
+                if (el) el.style.display = 'none';
+            }
+        } catch(e) {}
+    })();
+</script>
 
 @if(get_setting('topbar_banner') != null)
 <div class="position-relative top-banner removable-session z-1035 d-none" data-key="top-banner" data-value="removed">
@@ -274,9 +296,9 @@
 
                 @if(get_setting('show_header_login_icon') == 'on')
                 <div class="d-none d-lg-flex align-items-center ml-3 mr-0">
-                    <a href="{{ route('user.login') }}" class="btn btn-brand px-3 fw-600" title="{{ translate('Login') }}">
+                    <a href="{{ route('user.login') }}" class="btn btn-brand px-3 header-login-btn font-weight-normal" style="font-weight:400 !important;" title="{{ translate('Login') }}">
                         <i class="las la-sign-in-alt"></i>
-                        <span class="ml-1">{{ translate('Login') }}</span>
+                        <span class="ml-1" style="font-weight:400 !important;">{{ translate('Login') }}</span>
                     </a>
                 </div>
                 @endif

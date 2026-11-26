@@ -58,7 +58,12 @@ class CheckoutController extends Controller
         }
 
         if ($paymentOption == 'cash_on_delivery') {
-            $carts = Cart::where('temp_user_id', $request->session()->get('temp_user_id'))->get();
+            $buy_now_cart_id = $request->input('buy_now_cart_id') ?: $request->session()->get('buy_now_cart_id');
+            if ($buy_now_cart_id) {
+                $carts = Cart::where('id', $buy_now_cart_id)->get();
+            } else {
+                $carts = Cart::where('temp_user_id', $request->session()->get('temp_user_id'))->get();
+            }
             foreach ($carts as $cart) {
                 if ($cart->product == null || $cart->product->digital == 1 || $cart->product->cash_on_delivery == 0) {
                     flash(translate('Cash on Delivery is not available for one or more products in your cart.'))->warning();
@@ -483,13 +488,15 @@ class CheckoutController extends Controller
     public function order_confirmed(Request $request)
     {
         $combined_order = CombinedOrder::findOrFail(Session::get('combined_order_id'));
-   if(Auth::user()){
-        Cart::where('user_id', $combined_order->user_id)
-                ->delete();
-}else{
-     Cart::where('temp_user_id', $request->session()->get('temp_user_id'))
-                ->delete();
-}
+        $buy_now_cart_id = $request->input('buy_now_cart_id') ?: $request->session()->get('buy_now_cart_id');
+        if ($buy_now_cart_id) {
+            Cart::where('id', $buy_now_cart_id)->delete();
+            $request->session()->forget('buy_now_cart_id');
+        } elseif(Auth::user()){
+            Cart::where('user_id', $combined_order->user_id)->delete();
+        } else {
+            Cart::where('temp_user_id', $request->session()->get('temp_user_id'))->delete();
+        }
         //Session::forget('club_point');
         //Session::forget('combined_order_id');
         if(Auth::user()){

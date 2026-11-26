@@ -169,6 +169,9 @@
     display: flex;
     align-items: center;
     gap: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 6px;
 }
 .wiseman-footer .plinks a {
     border: 0;
@@ -325,8 +328,8 @@
     </div>
 </div>
 
-<div class="aiz-mobile-bottom-nav d-xl-none fixed-bottom bg-white shadow-lg border-top rounded-top" style="box-shadow: 0px -1px 10px rgb(0 0 0 / 15%)!important; ">
-    <div class="row align-items-center gutters-5">
+<div class="aiz-mobile-bottom-nav d-xl-none fixed-bottom bg-white shadow-lg border-top rounded-top" style="box-shadow: 0px -1px 10px rgb(0 0 0 / 15%)!important; max-width: 100vw; overflow: hidden;">
+    <div class="row align-items-center gutters-5 mx-0">
         <div class="col">
             <a href="{{ route('home') }}" class="text-reset d-block text-center pb-2 pt-3">
                 <i class="las la-home fs-20 opacity-60 {{ areActiveRoutes(['home'],'opacity-100 text-primary')}}"></i>
@@ -434,6 +437,7 @@
 
         <form action="{{ route('guest.payment.checkout') }}" method="post">
             @csrf
+            <input type="hidden" name="buy_now_cart_id" id="guest_buy_now_cart_id" value="">
                 <div class="modal-body">
 
     <div class="mb-4">
@@ -766,9 +770,22 @@
         }
     }
 
-    function guest_card(){
-        event.preventDefault();
+    function guest_card(e, buyNowCartId){
+        if (e && e.preventDefault) { e.preventDefault(); }
+        else if (typeof event !== 'undefined' && event && event.preventDefault) { event.preventDefault(); }
+
+        if (buyNowCartId) {
+            $('#guest_buy_now_cart_id').val(buyNowCartId);
+        } else {
+            $('#guest_buy_now_cart_id').val('');
+        }
+
         $('#guest-modal').modal();
+
+        var getCardUrl = "{{Route('getguestcard.getguest_card')}}";
+        if (buyNowCartId) {
+            getCardUrl += (getCardUrl.indexOf('?') >= 0 ? '&' : '?') + 'buy_now_cart_id=' + encodeURIComponent(buyNowCartId);
+        }
 
         $(document).off('click', '#guest-coupon-apply').on('click', '#guest-coupon-apply', function(){
             var data = {
@@ -812,7 +829,7 @@
         });
 
         $.ajax({
-                url : "{{Route('getguestcard.getguest_card')}}",
+                url : getCardUrl,
                 method : "get",
                 success : function(data){
 

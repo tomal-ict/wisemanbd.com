@@ -299,19 +299,6 @@
                                     </div>
                                     <hr>
                                 @endif
-                                <div class="product-purchase-controls">
-                                <div class="product-quantity-row">
-                                    <div class="row no-gutters align-items-center aiz-plus-minus product-quantity-stepper" style="width: 140px;">
-                                        <button class="btn col-auto btn-icon btn-sm btn-light" type="button" data-type="minus" data-field="quantity" disabled="">
-                                            <i class="las la-minus"></i>
-                                        </button>
-                                        <input type="number" name="quantity" class="col border-0 text-center flex-grow-1 fs-16 input-number" placeholder="1" value="{{ $detailedProduct->min_qty }}" min="{{ $detailedProduct->min_qty }}" max="10" lang="en">
-                                        <button class="btn  col-auto btn-icon btn-sm btn-light" type="button" data-type="plus" data-field="quantity">
-                                            <i class="las la-plus"></i>
-                                        </button>
-                                    </div>
-                                </div>
-
                                 @if($detailedProduct->sizeStocks->isNotEmpty() && count(json_decode($detailedProduct->colors)) > 0)
                                 <div class="row no-gutters mt-3">
                                     <div class="col-sm-2">
@@ -332,9 +319,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                @endif
 
-                                @if($detailedProduct->sizeStocks->isNotEmpty() && count(json_decode($detailedProduct->colors)) > 0)
                                 <script>
                                     (function() {
                                         var sizeStocks = @json($detailedProduct->sizeStocks->groupBy('size')->map(function($sizes) {
@@ -381,49 +366,134 @@
                                 </script>
                                 @endif
 
-                                <hr>
-
-                                <div class="row no-gutters pb-3 d-none" id="chosen_price_div">
-                                    <div class="col-sm-2">
-                                        <div class="opacity-50 my-2">{{ translate('Total Price')}}:</div>
-                                    </div>
-                                    <div class="col-sm-10">
-                                        <div class="product-price">
-                                            <strong id="chosen_price" class="h4 fw-600 text-primary">
-
-                                            </strong>
+                                <div class="product-purchase-controls">
+                                    <div class="product-quantity-row">
+                                        <div class="row no-gutters align-items-center aiz-plus-minus product-quantity-stepper" style="width: 140px;">
+                                            <button class="btn col-auto btn-icon btn-sm btn-light" type="button" data-type="minus" data-field="quantity" disabled="">
+                                                <i class="las la-minus"></i>
+                                            </button>
+                                            <input type="number" name="quantity" class="col border-0 text-center flex-grow-1 fs-16 input-number" placeholder="1" value="{{ $detailedProduct->min_qty }}" min="{{ $detailedProduct->min_qty }}" max="10" lang="en">
+                                            <button class="btn  col-auto btn-icon btn-sm btn-light" type="button" data-type="plus" data-field="quantity">
+                                                <i class="las la-plus"></i>
+                                            </button>
                                         </div>
+                                    </div>
+
+                                    <div class="product-action-row">
+                                        @if ($detailedProduct->external_link != null)
+                                            <a type="button" class="btn btn-brand buy-now fw-600" href="{{ $detailedProduct->external_link }}" style="background: linear-gradient(135deg, #6a2a8f 0%, #8f3fb8 100%) !important; border-color: transparent !important; color: #ffffff !important;">
+                                                <i class="la la-share"></i> {{ translate($detailedProduct->external_link_btn)}}
+                                            </a>
+                                        @else
+                                            <button type="button" class="btn add-to-cart fw-600" onclick="addToCart()" style="background: #ffffff !important; border: 2px solid #6a2a8f !important; color: #6a2a8f !important;">
+                                                <i class="las la-shopping-bag"></i>
+                                                <span class="d-inline-block"> {{ translate('Add to cart')}}</span>
+                                            </button>
+                                            
+                                            <button type="button" class="btn btn-brand buy-now fw-600" onclick="addbuynow()" style="background: linear-gradient(135deg, #6a2a8f 0%, #8f3fb8 100%) !important; border-color: transparent !important; color: #ffffff !important;">
+                                                <i class="la la-shopping-cart"></i>
+                                                <span class="d-inline-block"> {{ translate('Buy Now') }}</span>
+                                            </button>
+                                        @endif
                                     </div>
                                 </div>
 
-                            <div class="product-action-row">
-                                @if ($detailedProduct->external_link != null)
-                                    <a type="button" class="btn btn-primary buy-now fw-600" href="{{ $detailedProduct->external_link }}">
-                                        <i class="la la-share"></i> {{ translate($detailedProduct->external_link_btn)}}
-                                    </a>
-                                @else
-                                    <button type="button" class="btn btn-soft-primary add-to-cart fw-600" onclick="addToCart()">
-                                        <i class="las la-shopping-bag"></i>
-                                        <span class="d-md-inline-block"> {{ translate('Add to cart')}}</span>
-                                    </button>
-                                    
-                                    @if(!Auth::check())
-                                    <button type="button" class="btn btn-primary buy-now fw-600" onclick="addbuynow()">
-                                        <i class="la la-shopping-cart"></i>
-                                        <span class="d-md-inline-block"> {{ translate('Buy Now') }}</span>
-                                    </button>
-                                    @else
-                                    <button type="button" class="btn btn-primary buy-now fw-600" onclick="buyNow()">
-                                        <i class="la la-shopping-cart"></i> {{ translate('Buy Now') }}
-                                    </button>
-                                    @endif
-                                    
-                                @endif
-                                <button type="button" class="btn btn-secondary out-of-stock fw-600 d-none" disabled>
-                                    <i class="la la-cart-arrow-down"></i> {{ translate('Out of Stock')}}
-                                </button>
-                            </div>
-                            </div>
+                                {{-- Hidden container to satisfy JS references without ever rendering or taking space --}}
+                                <div id="chosen_price_div" style="display:none !important; position:absolute !important; width:0 !important; height:0 !important; overflow:hidden !important; opacity:0 !important; pointer-events:none !important;" aria-hidden="true">
+                                    <strong id="chosen_price"></strong>
+                                </div>
+
+                                <style>
+                                    .product-detail-reference .product-purchase-controls {
+                                        display: flex !important;
+                                        flex-direction: row !important;
+                                        align-items: center !important;
+                                        gap: 12px !important;
+                                        flex-wrap: wrap !important;
+                                        margin-top: 15px !important;
+                                    }
+                                    .product-detail-reference .product-quantity-row {
+                                        flex-shrink: 0 !important;
+                                    }
+                                    .product-detail-reference .product-action-row {
+                                        display: grid !important;
+                                        grid-template-columns: 1fr 1fr !important;
+                                        gap: 10px !important;
+                                        align-items: center !important;
+                                        margin-top: 0 !important;
+                                        flex: 1 1 260px !important;
+                                    }
+                                    .product-detail-reference .product-action-row .add-to-cart,
+                                    .product-detail-reference .product-action-row .buy-now {
+                                        min-height: 44px !important;
+                                        padding: 8px 18px !important;
+                                        border-radius: 6px !important;
+                                        font-size: 14px !important;
+                                        font-weight: 600 !important;
+                                        display: inline-flex !important;
+                                        align-items: center !important;
+                                        justify-content: center !important;
+                                        gap: 8px !important;
+                                        transition: all 0.25s ease !important;
+                                        text-decoration: none !important;
+                                        cursor: pointer !important;
+                                    }
+                                    .product-detail-reference .out-of-stock,
+                                    .out-of-stock {
+                                        display: none !important;
+                                    }
+                                    .product-detail-reference .product-action-row .add-to-cart {
+                                        display: inline-flex !important;
+                                        background: #ffffff !important;
+                                        border: 2px solid #6a2a8f !important;
+                                        color: #6a2a8f !important;
+                                        box-shadow: 0 2px 8px rgba(106, 42, 143, 0.15) !important;
+                                    }
+                                    .product-detail-reference .product-action-row .add-to-cart:hover,
+                                    .product-detail-reference .product-action-row .add-to-cart:focus {
+                                        background: linear-gradient(135deg, #6a2a8f 0%, #8f3fb8 100%) !important;
+                                        border-color: #6a2a8f !important;
+                                        color: #ffffff !important;
+                                        box-shadow: 0 4px 14px rgba(106, 42, 143, 0.35) !important;
+                                    }
+                                    .product-detail-reference .product-action-row .buy-now {
+                                        display: inline-flex !important;
+                                        background: linear-gradient(135deg, #6a2a8f 0%, #8f3fb8 100%) !important;
+                                        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+                                        color: #ffffff !important;
+                                        box-shadow: 0 3px 12px rgba(106, 42, 143, 0.3) !important;
+                                    }
+                                    .product-detail-reference .product-action-row .buy-now:hover,
+                                    .product-detail-reference .product-action-row .buy-now:focus {
+                                        background: linear-gradient(135deg, #541d75 0%, #7b31a3 100%) !important;
+                                        border-color: rgba(255, 255, 255, 0.25) !important;
+                                        color: #ffffff !important;
+                                        box-shadow: 0 6px 18px rgba(96, 32, 128, 0.45) !important;
+                                        transform: translateY(-1px) !important;
+                                    }
+                                    .product-detail-reference #chosen_price_div,
+                                    #chosen_price_div {
+                                        display: none !important;
+                                    }
+                                    @media (max-width: 575.98px) {
+                                        .product-detail-reference .product-purchase-controls {
+                                            flex-direction: column !important;
+                                            align-items: stretch !important;
+                                            gap: 10px !important;
+                                        }
+                                        .product-detail-reference .product-quantity-row {
+                                            width: 100% !important;
+                                        }
+                                        .product-detail-reference .product-quantity-row .product-quantity-stepper {
+                                            width: 100% !important;
+                                            max-width: 180px !important;
+                                        }
+                                        .product-detail-reference .product-action-row {
+                                            width: 100% !important;
+                                            margin-top: 4px !important;
+                                        }
+                                    }
+                                </style>
                             </form>
 
                             <div class="product-service-note">

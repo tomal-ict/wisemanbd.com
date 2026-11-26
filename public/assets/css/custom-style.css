@@ -1638,8 +1638,8 @@ body {
 
 .product-detail-reference .product-action-row {
     display: grid;
-    grid-template-columns: 1.15fr 1fr;
-    gap: 10px;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
     align-items: stretch;
 }
 
@@ -1650,42 +1650,55 @@ body {
     gap: 7px;
     min-height: 46px;
     border-radius: 6px;
-    font-weight: 700;
-    font-size: 15px;
+    font-weight: 600;
+    font-size: 14px;
     letter-spacing: 0.2px;
+    transition: all 0.25s ease;
 }
 
 .product-detail-reference .product-action-row .add-to-cart {
-    border-color: #111111;
+    border: 1.5px solid #6a2a8f;
     background: #ffffff;
-    color: #111111;
-    box-shadow: inset 0 0 0 1px #111111;
-    transition: 0.2s ease;
+    color: #6a2a8f;
+    box-shadow: 0 2px 8px rgba(106, 42, 143, 0.12);
 }
 
-.product-detail-reference .product-action-row .add-to-cart:hover {
-    background: #111111;
+.product-detail-reference .product-action-row .add-to-cart:hover,
+.product-detail-reference .product-action-row .add-to-cart:focus {
+    background: linear-gradient(135deg, #6a2a8f 0%, #8f3fb8 100%);
+    border-color: #6a2a8f;
     color: #ffffff;
+    box-shadow: 0 4px 14px rgba(106, 42, 143, 0.35);
 }
 
 .product-detail-reference .product-action-row .buy-now {
-    border-color: #e72a35;
-    background: #e72a35;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: linear-gradient(135deg, #6a2a8f 0%, #8f3fb8 100%);
     color: #ffffff;
-    box-shadow: 0 4px 14px rgba(231, 42, 53, 0.28);
-    transition: 0.2s ease;
+    box-shadow: 0 3px 12px rgba(106, 42, 143, 0.3);
 }
 
-.product-detail-reference .product-action-row .buy-now:hover {
-    background: #d91f2d;
-    border-color: #d91f2d;
+.product-detail-reference .product-action-row .buy-now:hover,
+.product-detail-reference .product-action-row .buy-now:focus {
+    background: linear-gradient(135deg, #541d75 0%, #7b31a3 100%);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    box-shadow: 0 6px 18px rgba(96, 32, 128, 0.45);
+    transform: translateY(-1px);
 }
 
 .product-detail-reference .product-purchase-controls > hr {
-    display: none;
+    display: none !important;
 }
 
+.product-detail-reference #chosen_price_div,
 .product-detail-reference .product-purchase-controls > #chosen_price_div,
+#chosen_price_div,
+.product-detail-reference .out-of-stock,
+.out-of-stock {
+    display: none !important;
+}
+
 .product-detail-reference .product-purchase-controls > .row.mt-3 {
     width: 100%;
 }
@@ -2027,30 +2040,17 @@ body {
 }
 
 .product-detail-reference .product-action-row {
-    display: block;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
 }
 
 .product-detail-reference .product-action-row .btn {
-    min-height: 38px;
-    padding: 8px 15px;
-    border-radius: 4px;
-    font-size: 13px;
-}
-
-.product-detail-reference .product-action-row .add-to-cart {
-    border-color: #111111;
-    background: #111111;
-    color: #ffffff;
-    box-shadow: none;
-}
-
-.product-detail-reference .product-action-row .add-to-cart:hover {
-    background: #2b2b2b;
-    color: #ffffff;
-}
-
-.product-detail-reference .product-action-row .buy-now {
-    display: none;
+    min-height: 42px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-weight: 600;
 }
 
 @media (max-width: 575.98px) {
@@ -2281,51 +2281,64 @@ body.modal-open #scrollTopBtn {
     }
 }
 
-/* 2) Hero slider: fixed, comfortable height. The full banner is always
-      visible (no cropping); empty sides are filled with a soft blurred
-      copy of the same banner. */
+/* 2) Hero slider: Full display width and large, beautiful height */
+.home-banner-area {
+    width: 100% !important;
+    overflow: hidden;
+}
+
+.home-banner-area .full-width-slider {
+    width: 100% !important;
+    border-radius: 0 !important;
+}
+
 .home-banner-area .full-width-slider .hero-slide-link {
     position: relative;
     display: block;
+    width: 100% !important;
+    height: auto !important;
     overflow: hidden;
-    height: clamp(200px, 34vw, 500px);
-    background: #f4f4f6;
+    background: transparent;
 }
 
 .home-banner-area .full-width-slider .hero-slide-bg {
-    position: absolute;
-    top: -30px;
-    right: -30px;
-    bottom: -30px;
-    left: -30px;
-    background-size: cover;
-    background-position: center;
-    filter: blur(22px) saturate(1.1);
-    opacity: .85;
-    pointer-events: none;
+    display: none !important;
 }
 
-.home-banner-area .full-width-slider .carousel-box img.hero-slide-img {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    height: 100% !important;
-    object-fit: contain;
+.home-banner-area .full-width-slider .carousel-box img,
+.home-banner-area .full-width-slider .carousel-box img.hero-slide-img,
+.home-banner-area .aiz-carousel .carousel-box img {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 520px;
+    max-height: 780px;
+    object-fit: cover !important;
+    border-radius: 0 !important;
+    display: block;
+}
+
+@media (max-width: 1199.98px) {
+    .home-banner-area .full-width-slider .carousel-box img,
+    .home-banner-area .full-width-slider .carousel-box img.hero-slide-img,
+    .home-banner-area .aiz-carousel .carousel-box img {
+        min-height: 420px;
+        max-height: 600px;
+    }
 }
 
 @media (max-width: 767.98px) {
     .home-banner-area .full-width-slider .hero-slide-link {
-        height: auto;
-    }
-
-    .home-banner-area .full-width-slider .hero-slide-bg {
-        display: none;
+        height: auto !important;
     }
 
     .home-banner-area .aiz-carousel .carousel-box img,
     .home-banner-area .full-width-slider .carousel-box img.hero-slide-img {
+        width: 100% !important;
         height: auto !important;
-        object-fit: contain;
+        min-height: 200px !important;
+        max-height: none !important;
+        object-fit: cover !important;
     }
 }
 
@@ -2446,5 +2459,93 @@ body.modal-open #scrollTopBtn {
         height: 28px !important;
         line-height: 28px !important;
         font-size: 11px !important;
+    }
+}
+
+/* =========================================================
+   Mobile Optimization & Zero Horizontal Scroll Guarantee
+   Ensures perfect fit across iPhone, Samsung & all devices
+   ========================================================= */
+html,
+body {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+    width: 100% !important;
+    position: relative;
+    -webkit-text-size-adjust: 100%;
+}
+
+.wiseman-home,
+.wiseman-footer,
+.product-detail-reference,
+.frontend-content,
+header,
+.top-navbar,
+.topbar-delivery {
+    max-width: 100% !important;
+}
+
+/* Unbold Login text guarantee across all viewports */
+.header-login-btn,
+.header-login-btn span,
+.header-login-btn i {
+    font-weight: 400 !important;
+}
+
+@media (max-width: 767.98px) {
+    .container {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        max-width: 100% !important;
+    }
+
+    /* Prevent any media from overflowing */
+    img, video, iframe {
+        max-width: 100%;
+    }
+
+    /* Top bar delivery text responsive */
+    .topbar-delivery {
+        font-size: 11px !important;
+        padding-left: 12px !important;
+        padding-right: 32px !important;
+    }
+
+    .topbar-delivery .topbar-delivery-content {
+        line-height: 1.4;
+    }
+
+    /* Product Action Row (Add to Cart + Buy Now) on Mobile */
+    .product-detail-reference .product-action-row {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+
+    .product-detail-reference .product-action-row .btn {
+        min-height: 42px !important;
+        padding: 8px 6px !important;
+        font-size: 13px !important;
+        letter-spacing: 0;
+    }
+
+    /* Floating WhatsApp on mobile */
+    .wa-floating {
+        right: 14px !important;
+        bottom: 74px !important;
+        width: 46px !important;
+        height: 46px !important;
+    }
+
+    .wa-floating svg {
+        width: 24px !important;
+        height: 24px !important;
+    }
+}
+
+@media (max-width: 360px) {
+    .product-detail-reference .product-action-row {
+        grid-template-columns: 1fr !important;
     }
 }

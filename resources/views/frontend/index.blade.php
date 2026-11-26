@@ -182,6 +182,7 @@
     scroll-behavior: smooth;
     scrollbar-width: none;
     padding-bottom: 6px;
+    max-width: 100%;
 }
 .wiseman-home .track::-webkit-scrollbar { display: none; }
 .wiseman-home .pcard {
@@ -628,14 +629,36 @@
     .wiseman-home .news h3 { font-size: 30px; }
 }
 @media (max-width: 560px) {
-    .wiseman-home .sgrid.c3 { grid-template-columns: 1fr; }
+    .wiseman-home .wrap { padding: 0 12px; }
+    .wiseman-home .sgrid.c3,
+    .wiseman-home .sgrid.c4,
+    .wiseman-home .bgrid,
+    .wiseman-home .rgrid { grid-template-columns: 1fr; }
     .wiseman-home .trustin { grid-template-columns: 1fr; }
     .wiseman-home .ti, .wiseman-home .ti:nth-child(odd) {
         border-left: 0;
         padding-left: 0;
     }
-    .wiseman-home .pcard { flex-basis: 175px !important; }
-    .wiseman-home .stitle { font-size: 28px; }
+    .wiseman-home .pcard { flex-basis: 165px !important; }
+    .wiseman-home .stitle { font-size: 24px; word-break: break-word; }
+    .wiseman-home .news h3 { font-size: 24px; word-break: break-word; }
+    .wiseman-home .newsin {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+        padding-top: 24px;
+        padding-bottom: 24px;
+    }
+    .wiseman-home .nform {
+        flex-direction: column;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+    .wiseman-home .nform input,
+    .wiseman-home .nform button {
+        width: 100%;
+    }
 }
 </style>
 
@@ -649,12 +672,10 @@
                 @foreach ($slider_images as $key => $value)
                     <div class="carousel-box">
                         <a href="{{ json_decode(get_setting('home_slider_links'), true)[$key] ?? '#' }}" class="hero-slide-link d-block">
-                            <span class="hero-slide-bg" style="background-image: url('{{ uploaded_asset($slider_images[$key]) }}');" aria-hidden="true"></span>
                             <img
-                                class="d-block mw-100 img-fit overflow-hidden hero-slide-img"
+                                class="d-block w-100 hero-slide-img"
                                 src="{{ uploaded_asset($slider_images[$key]) }}"
                                 alt="{{ env('APP_NAME') }} promo"
-                                height="650"
                                 onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder-rect.jpg') }}';"
                             >
                         </a>

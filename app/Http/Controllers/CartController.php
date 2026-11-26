@@ -16,6 +16,7 @@ class CartController extends Controller
 {
     public function index(Request $request)
     {
+        $request->session()->forget('buy_now_cart_id');
         if(auth()->user() != null) {
             $user_id = Auth::user()->id;
             if($request->session()->get('temp_user_id')) {
@@ -168,43 +169,49 @@ return response()->json([
     }
 
 
-    public function getguest_card()
+    public function getguest_card(Request $request)
     {
-
         $array = [];
 
         $temp_user_id = Session()->get('temp_user_id');
+        $user_id = Auth::check() ? Auth::user()->id : null;
+        $buy_now_cart_id = $request->get('buy_now_cart_id') ?: Session()->get('buy_now_cart_id');
 
-        if($temp_user_id) {
+        if ($buy_now_cart_id) {
+            $cart = \App\Models\Cart::where('id', $buy_now_cart_id)->get();
+        } elseif ($temp_user_id) {
             $cart = \App\Models\Cart::where('temp_user_id', $temp_user_id)->get();
-            foreach($cart as $value){
-                $variation = $value->variation;
-                $variationDisplay = $variation;
-                if ($value->size && $variationDisplay) {
-                    if (stripos($variationDisplay, $value->size) === false) {
-                        $variationDisplay = rtrim($variationDisplay, '-') . '-' . $value->size;
-                    }
-                } elseif ($value->size) {
-                    $variationDisplay = $value->size;
-                }
-                $array[] = [
-                    "cart_id" => $value->id,
-                    "icon"  => uploaded_asset($value->product->thumbnail_img),
-                    "title"  => $value->product->name,
-                    "variation" => $variationDisplay,
-                    "price" => $value->price,
-                    "total" => $value->price * $value->quantity,
-                    "qty" => $value->quantity
-                ];
-            }
-
-            return response()->json([
-                "guest_data" => $array
-            ]);
-
+        } elseif ($user_id) {
+            $cart = \App\Models\Cart::where('user_id', $user_id)->get();
+        } else {
+            $cart = collect();
         }
 
+        foreach($cart as $value){
+            if(!$value->product) continue;
+            $variation = $value->variation;
+            $variationDisplay = $variation;
+            if ($value->size && $variationDisplay) {
+                if (stripos($variationDisplay, $value->size) === false) {
+                    $variationDisplay = rtrim($variationDisplay, '-') . '-' . $value->size;
+                }
+            } elseif ($value->size) {
+                $variationDisplay = $value->size;
+            }
+            $array[] = [
+                "cart_id" => $value->id,
+                "icon"  => uploaded_asset($value->product->thumbnail_img),
+                "title"  => $value->product->name,
+                "variation" => $variationDisplay,
+                "price" => $value->price,
+                "total" => $value->price * $value->quantity,
+                "qty" => $value->quantity
+            ];
+        }
 
+        return response()->json([
+            "guest_data" => $array
+        ]);
     }
 
 
@@ -411,7 +418,11 @@ return response()->json([
                         if((($str != null && $cartItem['variation'] == $str) && $sameSize) || $str == null){
                             $foundInCart = true;
 
-                            $cartItem['quantity'] += $request['quantity'];
+                            if ($request->boolean('buy_now')) {
+                                $cartItem['quantity'] = $request['quantity'] ?: 1;
+                            } else {
+                                $cartItem['quantity'] += $request['quantity'];
+                            }
 
                             if($cart_product->wholesale_product){
                                 $wholesalePrice = $product_stock->wholesalePrices->where('min_qty', '<=', $request->quantity)->where('max_qty', '>=', $request->quantity)->first();
@@ -423,15 +434,20 @@ return response()->json([
                             $cartItem['price'] = $price;
 
                             $cartItem->save();
+                            $savedCartItem = $cartItem;
                         }
                     }
                 }
                 if (!$foundInCart) {
-                    Cart::create($data);
+                    $savedCartItem = Cart::create($data);
                 }
             }
             else{
-                Cart::create($data);
+                $savedCartItem = Cart::create($data);
+            }
+
+            if ($request->boolean('buy_now') && isset($savedCartItem) && $savedCartItem) {
+                $request->session()->put('buy_now_cart_id', $savedCartItem->id);
             }
 
             if(auth()->user() != null) {
@@ -446,6 +462,9 @@ return response()->json([
                 'status' => 1,
                 'cart_count' => count($carts),
             );
+            if ($request->boolean('buy_now') && isset($savedCartItem) && $savedCartItem) {
+                $response['buy_now_cart_id'] = $savedCartItem->id;
+            }
             if (!$quick) {
                 $response['modal_view'] = view('frontend.partials.addedToCart', compact('product', 'data'))->render();
                 $response['nav_cart_view'] = view('frontend.partials.cart')->render();

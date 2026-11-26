@@ -59,7 +59,7 @@
     <link rel="stylesheet" href="<?php echo e(static_asset('assets/css/bootstrap-rtl.min.css')); ?>">
     <?php endif; ?>
     <link rel="stylesheet" href="<?php echo e(static_asset('assets/css/aiz-core.css')); ?>">
-    <link rel="stylesheet" href="<?php echo e(static_asset('assets/css/custom-style.css?v=20261120b')); ?>">
+    <link rel="stylesheet" href="<?php echo e(static_asset('assets/css/custom-style.css?v=20261124_02')); ?>">
     <?php if(addon_is_activated('otp_system')): ?>
         <link rel="stylesheet" href="<?php echo e(static_asset('assets/css/intlTelInput.min.css')); ?>">
     <?php endif; ?>
@@ -732,15 +732,12 @@
                 _token  : AIZ.data.csrf,
                 id      : id,
                 quantity: 1,
-                quick   : 1
+                quick   : 1,
+                buy_now : 1
             }, function(data){
                 if (data && data.status == 1) {
                     setCartCount(data.cart_count);
-                    <?php if(auth()->guard()->check()): ?>
-                    window.location.replace("<?php echo e(route('checkout.shipping_info')); ?>");
-                    <?php else: ?>
-                    guest_card();
-                    <?php endif; ?>
+                    guest_card(null, data.buy_now_cart_id);
                 }
                 else {
                     setCartCount(prev);
@@ -769,14 +766,17 @@
                             }
                         })
 
-                       $('#option-choice-form #chosen_price_div').removeClass('d-none');
+                       $('#option-choice-form #chosen_price_div').hide();
                        $('#option-choice-form #chosen_price_div #chosen_price').html(data.price);
+                       if (data.price) {
+                           $('.product-price-area .product-current-price').html(data.price);
+                       }
                        $('#available-quantity').html(data.quantity);
                        $('.input-number').prop('max', data.max_limit);
                        if(parseInt(data.in_stock) == 0 && data.digital  == 0){
                            $('.buy-now').addClass('d-none');
                            $('.add-to-cart').addClass('d-none');
-                           $('.out-of-stock').removeClass('d-none');
+                           $('.out-of-stock').addClass('d-none');
                        }
                        else{
                            $('.buy-now').removeClass('d-none');
@@ -849,55 +849,31 @@
         }
         
         function addbuynow(){
-            if(checkAddToCartValidity()) {
-                // $('#addToCart').modal();
-                // $('.c-preloader').show();
-                $.ajax({
-                    type:"POST",
-                    url: '<?php echo e(route('cart.addToCart')); ?>',
-                    data: $('#option-choice-form').serializeArray(),
-                    success: function(data){
-                        if(data && data.status == 1){
-                            updateNavCart(data.nav_cart_view, data.cart_count);
-                            guest_card();
-                        }
-                        else{
-                            AIZ.plugins.notify('warning', data && data.message ? data.message : "<?php echo e(translate('Product is out of stock')); ?>");
-                        }
-                    }
-                });
-            }
-            else{
+            if(!checkAddToCartValidity()) {
                 AIZ.plugins.notify('warning', missingOptionMessage());
+                return;
             }
+            var formData = $('#option-choice-form').serializeArray();
+            formData.push({ name: 'buy_now', value: 1 });
+            formData.push({ name: 'quick', value: 1 });
+            $.ajax({
+                type:"POST",
+                url: '<?php echo e(route('cart.addToCart')); ?>',
+                data: formData,
+                success: function(data){
+                    if(data && data.status == 1){
+                        updateNavCart(data.nav_cart_view, data.cart_count);
+                        guest_card(null, data.buy_now_cart_id);
+                    }
+                    else{
+                        AIZ.plugins.notify('warning', data && data.message ? data.message : "<?php echo e(translate('Product is out of stock')); ?>");
+                    }
+                }
+            });
         }
 
         function buyNow(){
-            if(checkAddToCartValidity()) {
-                // $('#addToCart-modal-body').html(null);
-                // $('#addToCart').modal();
-                // $('.c-preloader').show();
-                $.ajax({
-                   type:"POST",
-                   url: '<?php echo e(route('cart.addToCart')); ?>',
-                   data: $('#option-choice-form').serializeArray(),
-                   success: function(data){
-                       if(data && data.status == 1){
-
-                            // $('#addToCart-modal-body').html(data.modal_view);
-                            updateNavCart(data.nav_cart_view,data.cart_count);
-
-                            window.location.replace("<?php echo e(route('checkout.shipping_info')); ?>");
-                       }
-                       else{
-                            AIZ.plugins.notify('warning', data && data.message ? data.message : "<?php echo e(translate('Product is out of stock')); ?>");
-                       }
-                   }
-               });
-            }
-            else{
-                AIZ.plugins.notify('warning', missingOptionMessage());
-            }
+            addbuynow();
         }
 
         function show_purchase_history_details(order_id)
