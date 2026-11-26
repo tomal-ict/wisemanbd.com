@@ -439,7 +439,7 @@ data-target=".home-banner2-target">
 					<div class="form-group">
 						<label>{{ translate('Sections & Categories') }}</label>
 						<small class="form-text text-muted mb-3 d-block">
-							{{ translate('You can select categories, "New Arrivals", or "Best Selling". Use the Up (▲) and Down (▼) buttons on each row to set their display sequence on the homepage.') }}
+							{{ translate('You can select any homepage section (Shop by Category, New Arrivals, 11.11 Mega Sale, Featured Products, Best Selling) or individual Product Categories. Use Up (▲) and Down (▼) buttons on each row to set their display sequence on your homepage.') }}
 						</small>
 						<div class="home-categories-target">
 							<input type="hidden" name="types[]" value="home_categories">
@@ -449,8 +449,11 @@ data-target=".home-banner2-target">
 										<div class="col">
 											<div class="form-group mb-0">
 												<select class="form-control aiz-selectpicker" name="home_categories[]" data-live-search="true" data-selected="{{ $val }}" required>
-													<optgroup label="{{ translate('Special Sections') }}">
+													<optgroup label="{{ translate('Featured Homepage Sections') }}">
+														<option value="shop_by_category" {{ in_array((string)$val, ['shop_by_category', 'categories']) ? 'selected' : '' }}>🗂️ {{ translate('Shop by Category') }}</option>
 														<option value="new_arrivals" {{ (string)$val === 'new_arrivals' ? 'selected' : '' }}>⭐ {{ translate('New Arrivals') }}</option>
+														<option value="mega_deals" {{ in_array((string)$val, ['mega_deals', 'flash_deal']) ? 'selected' : '' }}>⚡ {{ translate('11.11 Mega Sale / Mega Deals') }}</option>
+														<option value="featured_products" {{ (string)$val === 'featured_products' ? 'selected' : '' }}>💎 {{ translate('Featured Products') }}</option>
 														<option value="best_selling" {{ (string)$val === 'best_selling' ? 'selected' : '' }}>🔥 {{ translate('Best Selling') }}</option>
 													</optgroup>
 													<optgroup label="{{ translate('Product Categories') }}">
@@ -704,8 +707,11 @@ data-target=".home-banner3-target">
 		<div class="col">
 			<div class="form-group mb-0">
 				<select class="form-control aiz-selectpicker" name="home_categories[]" data-live-search="true" required>
-					<optgroup label="{{ translate('Special Sections') }}">
+					<optgroup label="{{ translate('Featured Homepage Sections') }}">
+						<option value="shop_by_category">🗂️ {{ translate('Shop by Category') }}</option>
 						<option value="new_arrivals">⭐ {{ translate('New Arrivals') }}</option>
+						<option value="mega_deals">⚡ {{ translate('11.11 Mega Sale / Mega Deals') }}</option>
+						<option value="featured_products">💎 {{ translate('Featured Products') }}</option>
 						<option value="best_selling">🔥 {{ translate('Best Selling') }}</option>
 					</optgroup>
 					<optgroup label="{{ translate('Product Categories') }}">

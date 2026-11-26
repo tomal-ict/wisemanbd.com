@@ -52,10 +52,10 @@
         </div>
     </div>
 </section>
-<section class="mb-4">
+<section class="mb-5">
 	<div class="container">
-        <div class="p-4 bg-white rounded shadow-sm overflow-hidden mw-100 text-left">
-		    @php echo $page->getTranslation('content'); @endphp
+        <div class="p-4 p-md-5 bg-white rounded shadow-sm overflow-hidden mw-100 text-left custom-page-content" style="font-size:15.5px; line-height:1.8; color:#3b2557;">
+		    {!! !empty($page->getTranslation('content')) ? $page->getTranslation('content') : $page->content !!}
         </div>
 	</div>
 </section>

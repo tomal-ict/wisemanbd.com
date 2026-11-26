@@ -156,7 +156,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row gutters-5 row-cols-xxl-4 row-cols-xl-3 row-cols-lg-4 row-cols-md-3 row-cols-2">
+                        <div class="row gutters-5 row-cols-xxl-4 row-cols-xl-4 row-cols-lg-4 row-cols-md-3 row-cols-2">
                             @foreach ($customer_products as $key => $product)
                                 <div class="col mb-2">
                                     <div class="aiz-card-box border border-light rounded shadow-sm hov-shadow-md h-100 has-transition bg-white">

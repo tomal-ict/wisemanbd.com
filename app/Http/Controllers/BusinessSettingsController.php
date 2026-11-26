@@ -285,6 +285,50 @@ public function facebook_comment_update(Request $request)
         return view('backend.setup_configurations.chatbot_ai');
     }
 
+    public function chatbot_ai_update(Request $request)
+    {
+        $saveSetting = function ($type, $value) {
+            $setting = BusinessSetting::where('type', $type)->first();
+            if ($setting == null) {
+                $setting = new BusinessSetting;
+                $setting->type = $type;
+            }
+            $setting->value = $value;
+            $setting->save();
+        };
+
+        $property_id = trim((string) $request->tawk_property_id);
+        $widget_id = trim((string) $request->tawk_widget_id);
+
+        // Smart extraction if user pastes full embed URL or chat link
+        if (preg_match('/(?:embed\.tawk\.to|tawk\.to\/chat)\/([a-zA-Z0-9]+)\/([a-zA-Z0-9_-]+)/', $property_id, $matches)) {
+            $property_id = $matches[1];
+            if (empty($widget_id) || $widget_id === 'default') {
+                $widget_id = $matches[2];
+            }
+        } elseif (preg_match('/(?:embed\.tawk\.to|tawk\.to\/chat)\/([a-zA-Z0-9]+)\/([a-zA-Z0-9_-]+)/', $widget_id, $matches)) {
+            if (empty($property_id)) {
+                $property_id = $matches[1];
+            }
+            $widget_id = $matches[2];
+        }
+
+        $saveSetting('tawk_status', $request->has('tawk_status') ? 1 : 0);
+        $saveSetting('tawk_property_id', $property_id);
+        $saveSetting('tawk_widget_id', !empty($widget_id) ? $widget_id : 'default');
+        $saveSetting('tawk_embed_code', $request->tawk_embed_code);
+
+        // Multi-channel settings (Messenger & WhatsApp)
+        $saveSetting('chatbot_status', $request->has('chatbot_status') ? 1 : 0);
+        $saveSetting('chatbot_messenger_link', $request->chatbot_messenger_link);
+        $saveSetting('chatbot_whatsapp_number', $request->chatbot_whatsapp_number);
+
+        Artisan::call('cache:clear');
+
+        flash(translate("Chatbot AI settings updated successfully"))->success();
+        return back();
+    }
+
     public function chatbot_update(Request $request)
     {
         $saveSetting = function ($type, $value) {

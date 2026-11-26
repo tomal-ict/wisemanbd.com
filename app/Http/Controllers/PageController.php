@@ -105,32 +105,33 @@ class PageController extends Controller
     public function update(Request $request, $id)
     {
         $page = Page::findOrFail($id);
-        if (Page::where('id','!=', $id)->where('slug', preg_replace('/[^A-Za-z0-9\-]/', '', str_replace(' ', '-', $request->slug)))->first() == null) {
-            if($page->type == 'custom_page'){
-              $page->slug           = preg_replace('/[^A-Za-z0-9\-]/', '', str_replace(' ', '-', $request->slug));
+        if($page->type == 'custom_page'){
+            $newSlug = preg_replace('/[^A-Za-z0-9\-]/', '', str_replace(' ', '-', $request->slug));
+            if (Page::where('id','!=', $id)->where('slug', $newSlug)->first() != null) {
+                flash(translate('Slug has been used already'))->warning();
+                return back();
             }
-            if($request->lang == env("DEFAULT_LANGUAGE")){
-              $page->title          = $request->title;
-              $page->content        = $request->content;
-            }
-            $page->meta_title       = $request->meta_title;
-            $page->meta_description = $request->meta_description;
-            $page->keywords         = $request->keywords;
-            $page->meta_image       = $request->meta_image;
-            $page->save();
-
-            $page_translation           = PageTranslation::firstOrNew(['lang' => $request->lang, 'page_id' => $page->id]);
-            $page_translation->title    = $request->title;
-            $page_translation->content  = $request->content;
-            $page_translation->save();
-
-            flash(translate('Page has been updated successfully'))->success();
-            return redirect()->route('website.pages');
+            $page->slug = $newSlug;
         }
 
-      flash(translate('Slug has been used already'))->warning();
-      return back();
+        if($request->lang == env("DEFAULT_LANGUAGE", "en") || empty($page->title) || $request->lang == null){
+            $page->title   = $request->title;
+            $page->content = $request->content;
+        }
+        $page->meta_title       = $request->meta_title;
+        $page->meta_description = $request->meta_description;
+        $page->keywords         = $request->keywords;
+        $page->meta_image       = $request->meta_image;
+        $page->save();
 
+        $lang = $request->lang ?: env("DEFAULT_LANGUAGE", "en");
+        $page_translation           = PageTranslation::firstOrNew(['lang' => $lang, 'page_id' => $page->id]);
+        $page_translation->title    = $request->title;
+        $page_translation->content  = $request->content;
+        $page_translation->save();
+
+        flash(translate('Page has been updated successfully'))->success();
+        return redirect()->route('website.pages');
     }
 
     /**
@@ -153,14 +154,26 @@ class PageController extends Controller
     }
 
     public function show_custom_page($slug){
-        $page = Page::where('slug', $slug)->first();
+        $cleanSlug = str_replace(['-', '_'], '', strtolower($slug));
+        $page = Page::where('slug', $slug)
+            ->orWhere('slug', str_replace('-', '', $slug))
+            ->orWhere('slug', str_replace('_', '-', $slug))
+            ->orWhere('slug', str_replace('-', '_', $slug))
+            ->orWhereRaw("LOWER(REPLACE(REPLACE(slug, '-', ''), '_', '')) = ?", [$cleanSlug])
+            ->first();
         if($page != null){
             return view('frontend.custom_page', compact('page'));
         }
         abort(404);
     }
     public function mobile_custom_page($slug){
-        $page = Page::where('slug', $slug)->first();
+        $cleanSlug = str_replace(['-', '_'], '', strtolower($slug));
+        $page = Page::where('slug', $slug)
+            ->orWhere('slug', str_replace('-', '', $slug))
+            ->orWhere('slug', str_replace('_', '-', $slug))
+            ->orWhere('slug', str_replace('-', '_', $slug))
+            ->orWhereRaw("LOWER(REPLACE(REPLACE(slug, '-', ''), '_', '')) = ?", [$cleanSlug])
+            ->first();
         if($page != null){
             return view('frontend.m_custom_page', compact('page'));
         }

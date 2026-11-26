@@ -236,7 +236,15 @@
                         <?php endif; ?>
                     </a>
                     <div class="tag">Crafted for the Wise.</div>
-                    <p>High-end menswear made with better fabrics and finer finishing. Quality you can feel in every detail.</p>
+                    <?php if(get_setting('about_us_description', null, App::getLocale()) != null): ?>
+                        <div class="about-text" style="color:var(--navyink); font-size:14px; max-width:380px; line-height:1.5; margin-bottom:16px;">
+                            <?php echo get_setting('about_us_description', null, App::getLocale()); ?>
+
+                        </div>
+                    <?php else: ?>
+                        <p>High-end menswear made with better fabrics and finer finishing. Quality you can feel in every detail.</p>
+                    <?php endif; ?>
+                    <?php if(get_setting('show_social_links', 'on') == 'on'): ?>
                     <div class="social">
                         <b>Get in touch:</b>
                         <?php if(get_setting('facebook_link') != null): ?>
@@ -254,40 +262,100 @@
                                 <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2C2 8.8 2 12 2 12s0 3.2.4 4.8a2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8c.4-1.6.4-4.8.4-4.8s0-3.2-.4-4.8zM10 15V9l5.2 3-5.2 3z"/></svg>
                             </a>
                         <?php endif; ?>
+                        <?php if(get_setting('twitter_link') != null): ?>
+                            <a href="<?php echo e(get_setting('twitter_link')); ?>" target="_blank" rel="noopener" aria-label="Twitter">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg>
+                            </a>
+                        <?php endif; ?>
+                        <?php if(get_setting('linkedin_link') != null): ?>
+                            <a href="<?php echo e(get_setting('linkedin_link')); ?>" target="_blank" rel="noopener" aria-label="LinkedIn">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
+                            </a>
+                        <?php endif; ?>
                     </div>
+                    <?php endif; ?>
                 </div>
 
+                
                 <div>
-                    <h4>COMPANY</h4>
+                    <h4><?php echo e(get_setting('widget_one', translate('Company'), App::getLocale())); ?></h4>
+                    <?php
+                        $w1_raw = get_setting('widget_one_labels', null, App::getLocale());
+                        if (empty($w1_raw)) {
+                            $w1_raw = get_setting('widget_one_labels');
+                        }
+                        $w1_labels = !empty($w1_raw) ? json_decode($w1_raw, true) : [];
+                        $w1_links = get_setting('widget_one_links') ? json_decode(get_setting('widget_one_links'), true) : [];
+                    ?>
                     <ul>
-                        <li><a href="<?php echo e(url('/about-us')); ?>">About WISEMAN</a></li>
-                        <li><a href="<?php echo e(url('/our-showroom')); ?>">Our Showroom</a></li>
-                        <li><a href="<?php echo e(url('/become-a-reseller')); ?>">Become a Reseller</a></li>
-                        <li><a href="<?php echo e(url('/careers')); ?>">Careers</a></li>
-                        <li><a href="tel:<?php echo e(get_setting('contact_phone', '+8801811762186')); ?>">Contact Us</a></li>
+                        <?php if(!empty($w1_labels) && is_array($w1_labels)): ?>
+                            <?php $__currentLoopData = $w1_labels; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $idx => $label): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php
+                                    $link = isset($w1_links[$idx]) ? $w1_links[$idx] : '#';
+                                    if (!empty($link) && !Str::startsWith($link, ['http://', 'https://', 'tel:', 'mailto:', '#']) && !Str::startsWith($link, '/')) {
+                                        $link = '/' . $link;
+                                    }
+                                ?>
+                                <li><a href="<?php echo e($link); ?>"><?php echo e($label); ?></a></li>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        <?php else: ?>
+                            <li><a href="<?php echo e(url('/about-us')); ?>">About WISEMAN</a></li>
+                            <li><a href="<?php echo e(url('/our-showroom')); ?>">Our Showroom</a></li>
+                            <li><a href="<?php echo e(url('/become-a-reseller')); ?>">Become a Reseller</a></li>
+                            <li><a href="<?php echo e(url('/careers')); ?>">Careers</a></li>
+                            <li><a href="<?php echo e(url('/contact-us')); ?>">Contact Us</a></li>
+                        <?php endif; ?>
                     </ul>
                 </div>
 
+                
                 <div>
-                    <h4>HELP</h4>
+                    <h4><?php echo e(get_setting('widget_two', translate('Help & Support'), App::getLocale())); ?></h4>
+                    <?php
+                        $w2_raw = get_setting('widget_two_labels', null, App::getLocale());
+                        if (empty($w2_raw)) {
+                            $w2_raw = get_setting('widget_two_labels');
+                        }
+                        $w2_labels = !empty($w2_raw) ? json_decode($w2_raw, true) : [];
+                        $w2_links = get_setting('widget_two_links') ? json_decode(get_setting('widget_two_links'), true) : [];
+                    ?>
                     <ul>
-                        <li><a href="<?php echo e(route('orders.track')); ?>">Track Your Order</a></li>
-                        <li><a href="<?php echo e(url('/delivery-info')); ?>">Delivery Information</a></li>
-                        <li><a href="<?php echo e(url('/returnpolicy')); ?>">Exchange &amp; Return</a></li>
-                        <li><a href="<?php echo e(url('/size-guide')); ?>">Size Guide</a></li>
-                        <li><a href="<?php echo e(url('/faq')); ?>">FAQ</a></li>
+                        <?php if(!empty($w2_labels) && is_array($w2_labels)): ?>
+                            <?php $__currentLoopData = $w2_labels; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $idx => $label): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php
+                                    $link = isset($w2_links[$idx]) ? $w2_links[$idx] : '#';
+                                    if (!empty($link) && !Str::startsWith($link, ['http://', 'https://', 'tel:', 'mailto:', '#']) && !Str::startsWith($link, '/')) {
+                                        $link = '/' . $link;
+                                    }
+                                ?>
+                                <li><a href="<?php echo e($link); ?>"><?php echo e($label); ?></a></li>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        <?php else: ?>
+                            <li><a href="<?php echo e(route('orders.track')); ?>">Track Your Order</a></li>
+                            <li><a href="<?php echo e(url('/delivery-info')); ?>">Delivery Information</a></li>
+                            <li><a href="<?php echo e(url('/returnpolicy')); ?>">Exchange &amp; Return</a></li>
+                            <li><a href="<?php echo e(url('/size-guide')); ?>">Size Guide</a></li>
+                            <li><a href="<?php echo e(url('/faq')); ?>">FAQ</a></li>
+                        <?php endif; ?>
                     </ul>
                 </div>
 
+                
                 <div class="contact">
-                    <h4>CONTACT</h4>
+                    <h4><?php echo e(translate('CONTACT')); ?></h4>
+                    <?php if(get_setting('contact_address', null, App::getLocale()) != null): ?>
+                        <div class="crow">
+                            <span class="ci"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/><circle cx="12" cy="10" r="3"/></svg></span>
+                            <div>Address<span><?php echo e(get_setting('contact_address', null, App::getLocale())); ?></span></div>
+                        </div>
+                    <?php endif; ?>
                     <div class="crow">
                         <span class="ci"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.6a1 1 0 0 1-.25 1z"/></svg></span>
-                        <div>Call / WhatsApp<b><?php echo e(get_setting('contact_phone', '+8801811762186')); ?></b></div>
+                        <div>Call / WhatsApp<b><a href="tel:<?php echo e(get_setting('contact_phone', '+8801811762186')); ?>" style="color:inherit;text-decoration:none;"><?php echo e(get_setting('contact_phone', '+8801811762186')); ?></a></b></div>
                     </div>
                     <div class="crow">
                         <span class="ci"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M3 5h18a1 1 0 0 1 1 1v.5l-10 6.5L2 6.5V6a1 1 0 0 1 1-1zm19 3.9V18a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V8.9l10 6.5z"/></svg></span>
-                        <div>Email<b><?php echo e(get_setting('contact_email', 'info@wisemanbd.com')); ?></b></div>
+                        <div>Email<b><a href="mailto:<?php echo e(get_setting('contact_email', 'info@wisemanbd.com')); ?>" style="color:inherit;text-decoration:none;"><?php echo e(get_setting('contact_email', 'info@wisemanbd.com')); ?></a></b></div>
                     </div>
                     <div class="crow">
                         <span class="ci"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
@@ -302,10 +370,16 @@
         <div class="wrap acin">
             <div class="pay">
                 <span>WE ACCEPT</span>
-                <img src="<?php echo e(static_asset('assets/img/wiseman/bkash.png')); ?>" alt="bKash">
-                <img src="<?php echo e(static_asset('assets/img/wiseman/nagad.png')); ?>" alt="Nagad">
-                <img src="<?php echo e(static_asset('assets/img/wiseman/visa.png')); ?>" alt="Visa">
-                <img src="<?php echo e(static_asset('assets/img/wiseman/mastercard.png')); ?>" alt="Mastercard">
+                <?php if(get_setting('payment_method_images') != null): ?>
+                    <?php $__currentLoopData = explode(',', get_setting('payment_method_images')); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $element): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <img src="<?php echo e(uploaded_asset($element)); ?>" alt="Payment method">
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                <?php else: ?>
+                    <img src="<?php echo e(static_asset('assets/img/wiseman/bkash.png')); ?>" alt="bKash">
+                    <img src="<?php echo e(static_asset('assets/img/wiseman/nagad.png')); ?>" alt="Nagad">
+                    <img src="<?php echo e(static_asset('assets/img/wiseman/visa.png')); ?>" alt="Visa">
+                    <img src="<?php echo e(static_asset('assets/img/wiseman/mastercard.png')); ?>" alt="Mastercard">
+                <?php endif; ?>
             </div>
             <nav class="plinks">
                 <a href="<?php echo e(url('/privacypolicy')); ?>">Privacy Policy</a>
@@ -319,7 +393,12 @@
     <div class="copy-bottom">
         <div class="wrap">
             <div class="text-left" current-verison="<?php echo e(get_setting('current_version')); ?>">
-                All Rights Reserved By A1systems BD
+                <?php if(get_setting('frontend_copyright_text', null, App::getLocale()) != null): ?>
+                    <?php echo get_setting('frontend_copyright_text', null, App::getLocale()); ?>
+
+                <?php else: ?>
+                    All Rights Reserved By WISEMAN &amp; A1systems BD
+                <?php endif; ?>
             </div>
             <div class="text-right">
                 <span>Website Designed By: <a href="https://tomal-ict.com" target="_blank" rel="noopener" style="color: #fff; text-decoration: underline; font-weight: 600;">Tomal Krishna Howlader</a></span>

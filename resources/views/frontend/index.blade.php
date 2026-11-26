@@ -183,11 +183,21 @@
     scrollbar-width: none;
     padding-bottom: 6px;
     max-width: 100%;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-overflow-scrolling: touch;
 }
 .wiseman-home .track::-webkit-scrollbar { display: none; }
+.wiseman-home .track.is-dragging {
+    cursor: grabbing;
+    scroll-behavior: auto !important;
+}
+.wiseman-home .track.is-dragging .pcard {
+    pointer-events: none;
+}
 .wiseman-home .pcard {
     color: var(--ink);
-    flex: 0 0 max(210px, calc((100% - (var(--n,5) - 1)*16px)/var(--n,5)));
     background: #fff;
     border-radius: 4px;
     border: 1px solid var(--line);
@@ -195,6 +205,18 @@
     display: flex;
     flex-direction: column;
     transition: .3s;
+    width: 100%;
+}
+.wiseman-home .track .pcard {
+    flex: 0 0 calc((100% - 3 * 16px) / 4);
+    min-width: calc((100% - 3 * 16px) / 4);
+    max-width: calc((100% - 3 * 16px) / 4);
+}
+.wiseman-home .bgrid .pcard {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    flex: none;
 }
 .wiseman-home .pcard:hover {
     border-color: var(--p);
@@ -613,8 +635,20 @@
     transform: scale(1.08);
 }
 
-@media (max-width: 820px) {
-    .wiseman-home .sgrid.c4, .wiseman-home .bgrid, .wiseman-home .rgrid {
+@media (max-width: 991px) {
+    .wiseman-home .track {
+        gap: 12px;
+    }
+    .wiseman-home .pcard {
+        flex: 0 0 calc((100% - 2 * 12px) / 3);
+        min-width: calc((100% - 2 * 12px) / 3);
+        max-width: calc((100% - 2 * 12px) / 3);
+    }
+    .wiseman-home .sgrid.c4, .wiseman-home .bgrid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+    .wiseman-home .rgrid {
         grid-template-columns: repeat(2, 1fr);
     }
     .wiseman-home .trustin {
@@ -625,23 +659,53 @@
         border-left: 0;
         padding-left: 0;
     }
-    .wiseman-home .stitle { font-size: 32px; }
-    .wiseman-home .news h3 { font-size: 30px; }
+    .wiseman-home .stitle { font-size: 30px; }
+    .wiseman-home .news h3 { font-size: 28px; }
 }
-@media (max-width: 560px) {
-    .wiseman-home .wrap { padding: 0 12px; }
+@media (max-width: 767px) {
+    .wiseman-home .wrap { padding: 0 10px; }
+    .wiseman-home .track {
+        gap: 10px !important;
+    }
+    .wiseman-home .track .pcard {
+        flex: 0 0 calc((100% - 10px) / 2) !important;
+        min-width: calc((100% - 10px) / 2) !important;
+        max-width: calc((100% - 10px) / 2) !important;
+    }
+    .wiseman-home .bgrid .pcard {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        flex: none !important;
+    }
     .wiseman-home .sgrid.c3,
     .wiseman-home .sgrid.c4,
-    .wiseman-home .bgrid,
+    .wiseman-home .bgrid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+    }
     .wiseman-home .rgrid { grid-template-columns: 1fr; }
     .wiseman-home .trustin { grid-template-columns: 1fr; }
     .wiseman-home .ti, .wiseman-home .ti:nth-child(odd) {
         border-left: 0;
         padding-left: 0;
     }
-    .wiseman-home .pcard { flex-basis: 165px !important; }
-    .wiseman-home .stitle { font-size: 24px; word-break: break-word; }
-    .wiseman-home .news h3 { font-size: 24px; word-break: break-word; }
+    .wiseman-home .pbody {
+        padding: 10px 8px !important;
+    }
+    .wiseman-home .pbody h3 {
+        font-size: 13px !important;
+        line-height: 1.3 !important;
+    }
+    .wiseman-home .price {
+        font-size: 13px !important;
+    }
+    .wiseman-home .actions .buy {
+        font-size: 12px !important;
+        padding: 6px 8px !important;
+    }
+    .wiseman-home .stitle { font-size: 22px; word-break: break-word; }
+    .wiseman-home .news h3 { font-size: 22px; word-break: break-word; }
     .wiseman-home .newsin {
         flex-direction: column;
         align-items: stretch;
@@ -649,6 +713,7 @@
         padding-top: 24px;
         padding-bottom: 24px;
     }
+}
     .wiseman-home .nform {
         flex-direction: column;
         width: 100%;
@@ -692,345 +757,455 @@
         @endif
     </div>
 
-    {{-- 2. Shop by Category (Only Backend Enabled/Featured Categories) --}}
+    {{-- Dynamic Homepage Sections (Order & Selection controlled from Admin -> Website Setup -> Pages -> Home Page -> Home Categories & Featured Sections) --}}
     @php
-        $featured_categories = \App\Models\Category::where('featured', 1)->get();
+        $raw_home_sections = get_setting('home_categories') ? json_decode(get_setting('home_categories'), true) : null;
+        $home_sections = (!empty($raw_home_sections) && is_array($raw_home_sections))
+            ? $raw_home_sections
+            : ['shop_by_category', 'new_arrivals', 'mega_deals', 'featured_products', 'best_selling'];
     @endphp
-    @if($featured_categories->count() > 0)
-    <div class="wrap">
-        <section class="sec">
-            <h2 class="stitle">Shop by Category</h2>
-            <p class="stag">Curated collections for everyday distinction</p>
-            <div class="sgrid {{ $featured_categories->count() <= 3 ? 'c3' : 'c4' }}">
-                @foreach($featured_categories as $cat)
-                    <a class="scard" href="{{ route('products.category', $cat->slug) }}">
-                        <div class="simg">
-                            @if($cat->banner)
-                                <img src="{{ uploaded_asset($cat->banner) }}" alt="{{ $cat->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
-                            @elseif($cat->icon)
-                                <img src="{{ uploaded_asset($cat->icon) }}" alt="{{ $cat->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
-                            @else
-                                <img src="{{ static_asset('assets/img/placeholder.jpg') }}" alt="{{ $cat->getTranslation('name') }}">
-                            @endif
-                        </div>
-                        <div class="sfoot">
-                            <span>{{ $cat->getTranslation('name') }}</span>
-                            <em>Shop now &rarr;</em>
-                        </div>
-                    </a>
-                @endforeach
-            </div>
-        </section>
-    </div>
-    @endif
 
-    {{-- 3. New Arrivals (Dynamic Products + Arrow Carousel Scroll) --}}
-    @php
-        $new_products = filter_products(\App\Models\Product::where('published', 1)->latest())->take(15)->get();
-    @endphp
-    @if($new_products->count() > 0)
-    <div class="wrap">
-        <section class="sec">
-            <div class="sechead">
-                <div>
-                    <h2 class="stitle">New Arrivals</h2>
-                    <p class="stag">Fresh cuts just added to the collection</p>
-                </div>
-                <a class="vall" href="{{ route('search') }}">View all &rarr;</a>
-                <div class="arrows" data-target="t-new">
-                    <button type="button" aria-label="Previous">&lsaquo;</button>
-                    <button type="button" aria-label="Next">&rsaquo;</button>
-                </div>
-            </div>
-            <div class="track" id="t-new">
-                @foreach($new_products as $product)
-                    @php
-                        $has_discount = discount_in_percentage($product) > 0;
-                        $pb_has_options = (count(json_decode($product->colors)) > 0)
-                            || ($product->choice_options != null && count(json_decode($product->choice_options)) > 0)
-                            || ($product->sizes != null && is_array(json_decode($product->sizes, true)) && count(json_decode($product->sizes, true)) > 0);
-                        $product_sizes = ($product->sizes != null && is_array(json_decode($product->sizes, true))) ? json_decode($product->sizes, true) : [];
-                    @endphp
-                    <article class="pcard">
-                        <div class="pimg">
-                            <a href="{{ route('product', $product->slug) }}">
-                                <img src="{{ uploaded_asset($product->thumbnail_img) }}" alt="{{ $product->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+    @foreach($home_sections as $section_key)
+        @if($section_key === 'shop_by_category' || $section_key === 'categories')
+            {{-- Shop by Category (Only Backend Enabled/Featured Categories) --}}
+            @php
+                $featured_categories = \App\Models\Category::where('featured', 1)->get();
+            @endphp
+            @if($featured_categories->count() > 0)
+            <div class="wrap">
+                <section class="sec">
+                    <h2 class="stitle">Shop by Category</h2>
+                    <p class="stag">Curated collections for everyday distinction</p>
+                    <div class="sgrid {{ $featured_categories->count() <= 3 ? 'c3' : 'c4' }}">
+                        @foreach($featured_categories as $cat)
+                            <a class="scard" href="{{ route('products.category', $cat->slug) }}">
+                                <div class="simg">
+                                    @if($cat->banner)
+                                        <img src="{{ uploaded_asset($cat->banner) }}" alt="{{ $cat->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                    @elseif($cat->icon)
+                                        <img src="{{ uploaded_asset($cat->icon) }}" alt="{{ $cat->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                    @else
+                                        <img src="{{ static_asset('assets/img/placeholder.jpg') }}" alt="{{ $cat->getTranslation('name') }}">
+                                    @endif
+                                </div>
+                                <div class="sfoot">
+                                    <span>{{ $cat->getTranslation('name') }}</span>
+                                    <em>Shop now &rarr;</em>
+                                </div>
                             </a>
-                            @if($has_discount)
-                                <span class="badge-disc">{{ discount_in_percentage($product) }}% OFF</span>
-                            @endif
-                            <button type="button" class="wish" onclick="addToWishList({{ $product->id }})" aria-label="Wishlist" title="{{ translate('Add to wishlist') }}">
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-                            </button>
-                        </div>
-                        <div class="pbody">
-                            <h3>
-                                <a href="{{ route('product', $product->slug) }}" title="{{ $product->getTranslation('name') }}">
-                                    {{ Str::limit($product->getTranslation('name'), 45) }}
-                                </a>
-                            </h3>
-                            <div class="price">
-                                <b>{{ home_discounted_base_price($product) }}</b>
-                                @if(home_base_price($product) != home_discounted_base_price($product))
-                                    <s>{{ home_base_price($product) }}</s>
-                                @endif
-                            </div>
-                            <div class="sizes">
-                                @if(!empty($product_sizes))
-                                    @foreach(array_slice($product_sizes, 0, 5) as $size)
-                                        <span>{{ $size }}</span>
-                                    @endforeach
-                                @endif
-                            </div>
-                        </div>
-                        <div class="actions">
-                            <button type="button" class="cartbtn" onclick="addToCartDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})" aria-label="Add to cart" title="{{ translate('Add to cart') }}">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a1.6 1.6 0 0 0 1.6 1.3h8.2a1.6 1.6 0 0 0 1.6-1.2L21 8H6"/></svg>
-                            </button>
-                            <button type="button" class="buy" onclick="buyNowDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})">Buy Now &rarr;</button>
-                        </div>
-                    </article>
-                @endforeach
-            </div>
-        </section>
-    </div>
-    @endif
-
-    {{-- 4. Mega Deals / Flash Sale Section (With Real-Time Countdown Timer) --}}
-    @php
-        $flash_deal = \App\Models\FlashDeal::where('status', 1)->where('featured', 1)->first();
-        $flash_active = ($flash_deal != null && strtotime(date('Y-m-d H:i:s')) >= $flash_deal->start_date && strtotime(date('Y-m-d H:i:s')) <= $flash_deal->end_date);
-        if ($flash_active) {
-            $flash_products = $flash_deal->flash_deal_products->map(function($fp) {
-                return \App\Models\Product::find($fp->product_id);
-            })->filter(function($p) { return $p != null && $p->published == 1; });
-            $remaining_seconds = max(0, $flash_deal->end_date - time());
-        } else {
-            $flash_products = filter_products(\App\Models\Product::where('published', 1)->where('discount', '>', 0))->latest()->take(10)->get();
-            if ($flash_products->isEmpty()) {
-                $flash_products = filter_products(\App\Models\Product::where('published', 1))->latest()->take(10)->get();
-            }
-            $remaining_seconds = 7 * 86400;
-        }
-    @endphp
-    @if($flash_products->count() > 0)
-    <section class="flash" id="mega">
-        <div class="wrap">
-            <div class="fhead">
-                <div class="fleft">
-                    <div>
-                        <span class="flabel">Limited Time Offer</span>
-                        <h2 class="stitle">{{ $flash_deal ? $flash_deal->title : 'Mega Deals' }}</h2>
-                        <p class="stag">Up to 40% off on hand-picked essentials</p>
+                        @endforeach
                     </div>
-                    <div class="cd" id="cd" data-remaining="{{ $remaining_seconds }}">
-                        <div><b id="d">00</b><small>DAYS</small></div>
-                        <div><b id="h">00</b><small>HOURS</small></div>
-                        <div><b id="m">00</b><small>MIN</small></div>
-                        <div><b id="s">00</b><small>SEC</small></div>
+                </section>
+            </div>
+            @endif
+
+        @elseif($section_key === 'new_arrivals')
+            {{-- New Arrivals (Dynamic Products + Swipe/Drag Scroll) --}}
+            @php
+                $new_products = filter_products(\App\Models\Product::where('published', 1)->latest())->take(15)->get();
+            @endphp
+            @if($new_products->count() > 0)
+            <div class="wrap">
+                <section class="sec">
+                    <div class="sechead">
+                        <div>
+                            <h2 class="stitle">New Arrivals</h2>
+                            <p class="stag">Fresh cuts just added to the collection</p>
+                        </div>
+                        <a class="vall" href="{{ route('search') }}">View all &rarr;</a>
+                    </div>
+                    <div class="track" id="t-new">
+                        @foreach($new_products as $product)
+                            @php
+                                $has_discount = discount_in_percentage($product) > 0;
+                                $pb_has_options = (count(json_decode($product->colors)) > 0)
+                                    || ($product->choice_options != null && count(json_decode($product->choice_options)) > 0)
+                                    || ($product->sizes != null && is_array(json_decode($product->sizes, true)) && count(json_decode($product->sizes, true)) > 0);
+                                $product_sizes = ($product->sizes != null && is_array(json_decode($product->sizes, true))) ? json_decode($product->sizes, true) : [];
+                            @endphp
+                            <article class="pcard">
+                                <div class="pimg">
+                                    <a href="{{ route('product', $product->slug) }}">
+                                        <img src="{{ uploaded_asset($product->thumbnail_img) }}" alt="{{ $product->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                    </a>
+                                    @if($has_discount)
+                                        <span class="badge-disc">{{ discount_in_percentage($product) }}% OFF</span>
+                                    @endif
+                                    <button type="button" class="wish" onclick="addToWishList({{ $product->id }})" aria-label="Wishlist" title="{{ translate('Add to wishlist') }}">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                                    </button>
+                                </div>
+                                <div class="pbody">
+                                    <h3>
+                                        <a href="{{ route('product', $product->slug) }}" title="{{ $product->getTranslation('name') }}">
+                                            {{ Str::limit($product->getTranslation('name'), 45) }}
+                                        </a>
+                                    </h3>
+                                    <div class="price">
+                                        <b>{{ home_discounted_base_price($product) }}</b>
+                                        @if(home_base_price($product) != home_discounted_base_price($product))
+                                            <s>{{ home_base_price($product) }}</s>
+                                        @endif
+                                    </div>
+                                    <div class="sizes">
+                                        @if(!empty($product_sizes))
+                                            @foreach(array_slice($product_sizes, 0, 5) as $size)
+                                                <span>{{ $size }}</span>
+                                            @endforeach
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="actions">
+                                    <button type="button" class="cartbtn" onclick="addToCartDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})" aria-label="Add to cart" title="{{ translate('Add to cart') }}">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a1.6 1.6 0 0 0 1.6 1.3h8.2a1.6 1.6 0 0 0 1.6-1.2L21 8H6"/></svg>
+                                    </button>
+                                    <button type="button" class="buy" onclick="buyNowDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})">Buy Now &rarr;</button>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                </section>
+            </div>
+            @endif
+
+        @elseif($section_key === 'mega_deals' || $section_key === 'flash_deal')
+            {{-- Mega Deals / Flash Sale Section (With Real-Time Countdown Timer) --}}
+            @php
+                $flash_deal = \App\Models\FlashDeal::where('status', 1)->where('featured', 1)->first();
+                if (!$flash_deal) {
+                    $flash_deal = \App\Models\FlashDeal::where('status', 1)->first();
+                }
+                $flash_active = ($flash_deal != null && strtotime(date('Y-m-d H:i:s')) >= $flash_deal->start_date && strtotime(date('Y-m-d H:i:s')) <= $flash_deal->end_date);
+                if ($flash_deal != null && $flash_deal->end_date > time()) {
+                    $remaining_seconds = max(0, $flash_deal->end_date - time());
+                } else {
+                    $remaining_seconds = 7 * 86400;
+                }
+
+                // Get products where mega_deal == 1, or attached to active flash deal
+                $mega_ids = \App\Models\Product::where('published', 1)->where('mega_deal', 1)->pluck('id')->toArray();
+                if ($flash_deal != null) {
+                    $fd_ids = $flash_deal->flash_deal_products->pluck('product_id')->toArray();
+                    $mega_ids = array_unique(array_merge($mega_ids, $fd_ids));
+                }
+
+                if (!empty($mega_ids)) {
+                    $flash_products = filter_products(\App\Models\Product::where('published', 1)->whereIn('id', $mega_ids))->latest()->get();
+                } else {
+                    $flash_products = filter_products(\App\Models\Product::where('published', 1)->where('discount', '>', 0))->latest()->take(10)->get();
+                    if ($flash_products->isEmpty()) {
+                        $flash_products = filter_products(\App\Models\Product::where('published', 1))->latest()->take(10)->get();
+                    }
+                }
+            @endphp
+            @if($flash_products->count() > 0)
+            <section class="flash" id="mega">
+                <div class="wrap">
+                    <div class="fhead">
+                        <div class="fleft">
+                            <div>
+                                <span class="flabel">Limited Time Offer</span>
+                                <h2 class="stitle">{{ $flash_deal ? $flash_deal->title : 'Mega Deals' }}</h2>
+                                <p class="stag">Up to 40% off on hand-picked essentials</p>
+                            </div>
+                            <div class="cd" id="cd" data-remaining="{{ $remaining_seconds }}">
+                                <div><b id="d">00</b><small>DAYS</small></div>
+                                <div><b id="h">00</b><small>HOURS</small></div>
+                                <div><b id="m">00</b><small>MIN</small></div>
+                                <div><b id="s">00</b><small>SEC</small></div>
+                            </div>
+                        </div>
+                        <div class="arrows dark" data-target="t-flash">
+                            <button type="button" aria-label="Previous">&lsaquo;</button>
+                            <button type="button" aria-label="Next">&rsaquo;</button>
+                        </div>
+                    </div>
+                    <div class="track" id="t-flash" style="--n:4">
+                        @foreach($flash_products as $product)
+                            @php
+                                $has_discount = discount_in_percentage($product) > 0;
+                                $pb_has_options = (count(json_decode($product->colors)) > 0)
+                                    || ($product->choice_options != null && count(json_decode($product->choice_options)) > 0)
+                                    || ($product->sizes != null && is_array(json_decode($product->sizes, true)) && count(json_decode($product->sizes, true)) > 0);
+                                $product_sizes = ($product->sizes != null && is_array(json_decode($product->sizes, true))) ? json_decode($product->sizes, true) : [];
+                            @endphp
+                            <article class="pcard">
+                                <div class="pimg">
+                                    <a href="{{ route('product', $product->slug) }}">
+                                        <img src="{{ uploaded_asset($product->thumbnail_img) }}" alt="{{ $product->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                    </a>
+                                    @if($has_discount)
+                                        <span class="badge-disc">{{ discount_in_percentage($product) }}% OFF</span>
+                                    @endif
+                                    <button type="button" class="wish" onclick="addToWishList({{ $product->id }})" aria-label="Wishlist">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 0L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                                    </button>
+                                </div>
+                                <div class="pbody">
+                                    <h3>
+                                        <a href="{{ route('product', $product->slug) }}" title="{{ $product->getTranslation('name') }}">
+                                            {{ Str::limit($product->getTranslation('name'), 45) }}
+                                        </a>
+                                    </h3>
+                                    <div class="price">
+                                        <b>{{ home_discounted_base_price($product) }}</b>
+                                        @if(home_base_price($product) != home_discounted_base_price($product))
+                                            <s>{{ home_base_price($product) }}</s>
+                                        @endif
+                                    </div>
+                                    <div class="sizes">
+                                        @if(!empty($product_sizes))
+                                            @foreach(array_slice($product_sizes, 0, 5) as $size)
+                                                <span>{{ $size }}</span>
+                                            @endforeach
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="actions">
+                                    <button type="button" class="cartbtn" onclick="addToCartDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})" aria-label="Add to cart">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a1.6 1.6 0 0 0 1.6 1.3h8.2a1.6 1.6 0 0 0 1.6-1.2L21 8H6"/></svg>
+                                    </button>
+                                    <button type="button" class="buy" onclick="buyNowDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})">Buy Now &rarr;</button>
+                                </div>
+                            </article>
+                        @endforeach
                     </div>
                 </div>
-                <div class="arrows dark" data-target="t-flash">
-                    <button type="button" aria-label="Previous">&lsaquo;</button>
-                    <button type="button" aria-label="Next">&rsaquo;</button>
-                </div>
-            </div>
-            <div class="track" id="t-flash" style="--n:4">
-                @foreach($flash_products as $product)
-                    @php
-                        $has_discount = discount_in_percentage($product) > 0;
-                        $pb_has_options = (count(json_decode($product->colors)) > 0)
-                            || ($product->choice_options != null && count(json_decode($product->choice_options)) > 0)
-                            || ($product->sizes != null && is_array(json_decode($product->sizes, true)) && count(json_decode($product->sizes, true)) > 0);
-                        $product_sizes = ($product->sizes != null && is_array(json_decode($product->sizes, true))) ? json_decode($product->sizes, true) : [];
-                    @endphp
-                    <article class="pcard">
-                        <div class="pimg">
-                            <a href="{{ route('product', $product->slug) }}">
-                                <img src="{{ uploaded_asset($product->thumbnail_img) }}" alt="{{ $product->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
-                            </a>
-                            @if($has_discount)
-                                <span class="badge-disc">{{ discount_in_percentage($product) }}% OFF</span>
-                            @endif
-                            <button type="button" class="wish" onclick="addToWishList({{ $product->id }})" aria-label="Wishlist">
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 0L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-                            </button>
-                        </div>
-                        <div class="pbody">
-                            <h3>
-                                <a href="{{ route('product', $product->slug) }}" title="{{ $product->getTranslation('name') }}">
-                                    {{ Str::limit($product->getTranslation('name'), 45) }}
-                                </a>
-                            </h3>
-                            <div class="price">
-                                <b>{{ home_discounted_base_price($product) }}</b>
-                                @if(home_base_price($product) != home_discounted_base_price($product))
-                                    <s>{{ home_base_price($product) }}</s>
-                                @endif
-                            </div>
-                            <div class="sizes">
-                                @if(!empty($product_sizes))
-                                    @foreach(array_slice($product_sizes, 0, 5) as $size)
-                                        <span>{{ $size }}</span>
-                                    @endforeach
-                                @endif
-                            </div>
-                        </div>
-                        <div class="actions">
-                            <button type="button" class="cartbtn" onclick="addToCartDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})" aria-label="Add to cart">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a1.6 1.6 0 0 0 1.6 1.3h8.2a1.6 1.6 0 0 0 1.6-1.2L21 8H6"/></svg>
-                            </button>
-                            <button type="button" class="buy" onclick="buyNowDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})">Buy Now &rarr;</button>
-                        </div>
-                    </article>
-                @endforeach
-            </div>
-        </div>
-    </section>
-    @endif
+            </section>
+            @endif
 
-    {{-- 5. Featured Products Grid (With View All) --}}
-    @php
-        $featured_products = filter_products(\App\Models\Product::where('published', 1)->where('featured', 1))->latest()->take(8)->get();
-        if($featured_products->isEmpty()){
-            $featured_products = filter_products(\App\Models\Product::where('published', 1))->latest()->take(8)->get();
-        }
-    @endphp
-    @if($featured_products->count() > 0)
-    <div class="wrap">
-        <section class="sec">
-            <div class="sechead">
-                <div>
-                    <h2 class="stitle">Featured Products</h2>
-                    <p class="stag">Handpicked styles, just for you</p>
-                </div>
-                <a class="vall" href="{{ route('search') }}">View all &rarr;</a>
+        @elseif($section_key === 'featured_products')
+            {{-- Featured Products Grid (With View All) --}}
+            @php
+                $featured_products = filter_products(\App\Models\Product::where('published', 1)->where('featured', 1))->latest()->take(8)->get();
+                if($featured_products->isEmpty()){
+                    $featured_products = filter_products(\App\Models\Product::where('published', 1))->latest()->take(8)->get();
+                }
+            @endphp
+            @if($featured_products->count() > 0)
+            <div class="wrap">
+                <section class="sec">
+                    <div class="sechead">
+                        <div>
+                            <h2 class="stitle">Featured Products</h2>
+                            <p class="stag">Handpicked styles, just for you</p>
+                        </div>
+                        <a class="vall" href="{{ route('search') }}">View all &rarr;</a>
+                    </div>
+                    <div class="bgrid">
+                        @foreach($featured_products as $product)
+                            @php
+                                $has_discount = discount_in_percentage($product) > 0;
+                                $pb_has_options = (count(json_decode($product->colors)) > 0)
+                                    || ($product->choice_options != null && count(json_decode($product->choice_options)) > 0)
+                                    || ($product->sizes != null && is_array(json_decode($product->sizes, true)) && count(json_decode($product->sizes, true)) > 0);
+                                $product_sizes = ($product->sizes != null && is_array(json_decode($product->sizes, true))) ? json_decode($product->sizes, true) : [];
+                            @endphp
+                            <article class="pcard">
+                                <div class="pimg">
+                                    <a href="{{ route('product', $product->slug) }}">
+                                        <img src="{{ uploaded_asset($product->thumbnail_img) }}" alt="{{ $product->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                    </a>
+                                    @if($has_discount)
+                                        <span class="badge-disc">{{ discount_in_percentage($product) }}% OFF</span>
+                                    @endif
+                                    <button type="button" class="wish" onclick="addToWishList({{ $product->id }})" aria-label="Wishlist">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 0L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                                    </button>
+                                </div>
+                                <div class="pbody">
+                                    <h3>
+                                        <a href="{{ route('product', $product->slug) }}" title="{{ $product->getTranslation('name') }}">
+                                            {{ Str::limit($product->getTranslation('name'), 45) }}
+                                        </a>
+                                    </h3>
+                                    <div class="price">
+                                        <b>{{ home_discounted_base_price($product) }}</b>
+                                        @if(home_base_price($product) != home_discounted_base_price($product))
+                                            <s>{{ home_base_price($product) }}</s>
+                                        @endif
+                                    </div>
+                                    <div class="sizes">
+                                        @if(!empty($product_sizes))
+                                            @foreach(array_slice($product_sizes, 0, 5) as $size)
+                                                <span>{{ $size }}</span>
+                                            @endforeach
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="actions">
+                                    <button type="button" class="cartbtn" onclick="addToCartDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})" aria-label="Add to cart">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a1.6 1.6 0 0 0 1.6 1.3h8.2a1.6 1.6 0 0 0 1.6-1.2L21 8H6"/></svg>
+                                    </button>
+                                    <button type="button" class="buy" onclick="buyNowDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})">Buy Now &rarr;</button>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                </section>
             </div>
-            <div class="bgrid">
-                @foreach($featured_products as $product)
-                    @php
-                        $has_discount = discount_in_percentage($product) > 0;
-                        $pb_has_options = (count(json_decode($product->colors)) > 0)
-                            || ($product->choice_options != null && count(json_decode($product->choice_options)) > 0)
-                            || ($product->sizes != null && is_array(json_decode($product->sizes, true)) && count(json_decode($product->sizes, true)) > 0);
-                    @endphp
-                    <article class="pcard">
-                        <div class="pimg">
-                            <a href="{{ route('product', $product->slug) }}">
-                                <img src="{{ uploaded_asset($product->thumbnail_img) }}" alt="{{ $product->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
-                            </a>
-                            @if($has_discount)
-                                <span class="badge-disc">{{ discount_in_percentage($product) }}% OFF</span>
-                            @endif
-                            <button type="button" class="wish" onclick="addToWishList({{ $product->id }})" aria-label="Wishlist">
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 0L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-                            </button>
-                        </div>
-                        <div class="pbody">
-                            <h3>
-                                <a href="{{ route('product', $product->slug) }}" title="{{ $product->getTranslation('name') }}">
-                                    {{ Str::limit($product->getTranslation('name'), 45) }}
-                                </a>
-                            </h3>
-                            <div class="price">
-                                <b>{{ home_discounted_base_price($product) }}</b>
-                                @if(home_base_price($product) != home_discounted_base_price($product))
-                                    <s>{{ home_base_price($product) }}</s>
-                                @endif
-                            </div>
-                        </div>
-                        <div class="actions">
-                            <button type="button" class="cartbtn" onclick="addToCartDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})" aria-label="Add to cart">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a1.6 1.6 0 0 0 1.6 1.3h8.2a1.6 1.6 0 0 0 1.6-1.2L21 8H6"/></svg>
-                            </button>
-                            <button type="button" class="buy" onclick="buyNowDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})">Buy Now &rarr;</button>
-                        </div>
-                    </article>
-                @endforeach
-            </div>
-        </section>
-    </div>
-    @endif
+            @endif
 
-    {{-- 6. Delivery Banner Section --}}
+        @elseif($section_key === 'best_selling')
+            {{-- Best Selling Section (With View All) --}}
+            @php
+                $best_selling_products = filter_products(\App\Models\Product::where('published', 1)->orderBy('num_of_sale', 'desc'))->take(8)->get();
+                if($best_selling_products->isEmpty()){
+                    $best_selling_products = filter_products(\App\Models\Product::where('published', 1))->take(8)->get();
+                }
+            @endphp
+            @if($best_selling_products->count() > 0)
+            <div class="wrap">
+                <section class="sec best">
+                    <div class="sechead">
+                        <div>
+                            <h2 class="stitle">Best Selling</h2>
+                            <p class="stag">Loved by many, chosen by you</p>
+                        </div>
+                        <a class="vall" href="{{ route('search') }}?sort_by=num_of_sale">View all &rarr;</a>
+                    </div>
+                    <div class="bgrid">
+                        @foreach($best_selling_products as $product)
+                            @php
+                                $has_discount = discount_in_percentage($product) > 0;
+                                $pb_has_options = (count(json_decode($product->colors)) > 0)
+                                    || ($product->choice_options != null && count(json_decode($product->choice_options)) > 0)
+                                    || ($product->sizes != null && is_array(json_decode($product->sizes, true)) && count(json_decode($product->sizes, true)) > 0);
+                                $product_sizes = ($product->sizes != null && is_array(json_decode($product->sizes, true))) ? json_decode($product->sizes, true) : [];
+                            @endphp
+                            <article class="pcard">
+                                <div class="pimg">
+                                    <a href="{{ route('product', $product->slug) }}">
+                                        <img src="{{ uploaded_asset($product->thumbnail_img) }}" alt="{{ $product->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                    </a>
+                                    @if($has_discount)
+                                        <span class="badge-disc">{{ discount_in_percentage($product) }}% OFF</span>
+                                    @endif
+                                    <button type="button" class="wish" onclick="addToWishList({{ $product->id }})" aria-label="Wishlist">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 0L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                                    </button>
+                                </div>
+                                <div class="pbody">
+                                    <h3>
+                                        <a href="{{ route('product', $product->slug) }}" title="{{ $product->getTranslation('name') }}">
+                                            {{ Str::limit($product->getTranslation('name'), 45) }}
+                                        </a>
+                                    </h3>
+                                    <div class="price">
+                                        <b>{{ home_discounted_base_price($product) }}</b>
+                                        @if(home_base_price($product) != home_discounted_base_price($product))
+                                            <s>{{ home_base_price($product) }}</s>
+                                        @endif
+                                    </div>
+                                    <div class="sizes">
+                                        @if(!empty($product_sizes))
+                                            @foreach(array_slice($product_sizes, 0, 5) as $size)
+                                                <span>{{ $size }}</span>
+                                            @endforeach
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="actions">
+                                    <button type="button" class="cartbtn" onclick="addToCartDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})" aria-label="Add to cart">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a1.6 1.6 0 0 0 1.6 1.3h8.2a1.6 1.6 0 0 0 1.6-1.2L21 8H6"/></svg>
+                                    </button>
+                                    <button type="button" class="buy" onclick="buyNowDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})">Buy Now &rarr;</button>
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                </section>
+            </div>
+            @endif
+
+        @else
+            {{-- Category Section by Category ID --}}
+            @php
+                $cat_model = \App\Models\Category::find($section_key);
+            @endphp
+            @if($cat_model != null)
+                @php
+                    $cat_prod_ids = \App\Utility\CategoryUtility::children_ids($cat_model->id);
+                    $cat_prod_ids[] = $cat_model->id;
+                    $cat_products = filter_products(\App\Models\Product::where('published', 1)->whereIn('cat_prod_ids', $cat_prod_ids))->latest()->take(8)->get();
+                    if($cat_products->isEmpty()){
+                        $cat_products = filter_products(\App\Models\Product::where('published', 1)->where('category_id', $cat_model->id))->latest()->take(8)->get();
+                    }
+                @endphp
+                @if($cat_products->count() > 0)
+                <div class="wrap">
+                    <section class="sec">
+                        <div class="sechead">
+                            <div>
+                                <h2 class="stitle">{{ $cat_model->getTranslation('name') }}</h2>
+                                <p class="stag">{{ translate('Curated selection for') }} {{ $cat_model->getTranslation('name') }}</p>
+                            </div>
+                            <a class="vall" href="{{ route('products.category', $cat_model->slug) }}">View all &rarr;</a>
+                        </div>
+                        <div class="bgrid">
+                            @foreach($cat_products as $product)
+                                @php
+                                    $has_discount = discount_in_percentage($product) > 0;
+                                    $pb_has_options = (count(json_decode($product->colors)) > 0)
+                                        || ($product->choice_options != null && count(json_decode($product->choice_options)) > 0)
+                                        || ($product->sizes != null && is_array(json_decode($product->sizes, true)) && count(json_decode($product->sizes, true)) > 0);
+                                    $product_sizes = ($product->sizes != null && is_array(json_decode($product->sizes, true))) ? json_decode($product->sizes, true) : [];
+                                @endphp
+                                <article class="pcard">
+                                    <div class="pimg">
+                                        <a href="{{ route('product', $product->slug) }}">
+                                            <img src="{{ uploaded_asset($product->thumbnail_img) }}" alt="{{ $product->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                        </a>
+                                        @if($has_discount)
+                                            <span class="badge-disc">{{ discount_in_percentage($product) }}% OFF</span>
+                                        @endif
+                                        <button type="button" class="wish" onclick="addToWishList({{ $product->id }})" aria-label="Wishlist">
+                                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 0L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
+                                        </button>
+                                    </div>
+                                    <div class="pbody">
+                                        <h3>
+                                            <a href="{{ route('product', $product->slug) }}" title="{{ $product->getTranslation('name') }}">
+                                                {{ Str::limit($product->getTranslation('name'), 45) }}
+                                            </a>
+                                        </h3>
+                                        <div class="price">
+                                            <b>{{ home_discounted_base_price($product) }}</b>
+                                            @if(home_base_price($product) != home_discounted_base_price($product))
+                                                <s>{{ home_base_price($product) }}</s>
+                                            @endif
+                                        </div>
+                                        <div class="sizes">
+                                            @if(!empty($product_sizes))
+                                                @foreach(array_slice($product_sizes, 0, 5) as $size)
+                                                    <span>{{ $size }}</span>
+                                                @endforeach
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="actions">
+                                        <button type="button" class="cartbtn" onclick="addToCartDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})" aria-label="Add to cart">
+                                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a1.6 1.6 0 0 0 1.6 1.3h8.2a1.6 1.6 0 0 0 1.6-1.2L21 8H6"/></svg>
+                                        </button>
+                                        <button type="button" class="buy" onclick="buyNowDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})">Buy Now &rarr;</button>
+                                    </div>
+                                </article>
+                            @endforeach
+                        </div>
+                    </section>
+                </div>
+                @endif
+            @endif
+        @endif
+    @endforeach
+
+    {{-- Delivery Banner Section --}}
     <div class="wrap">
         <div class="dbanner">
             <img src="{{ static_asset('assets/img/wiseman/delivery-banner.jpg') }}" alt="Wiseman — Within 48 hours delivery all over Bangladesh. Cash on Delivery, 7 days easy return. Call +8801811762186" width="1920" height="540" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder-rect.jpg') }}';">
         </div>
     </div>
-
-    {{-- 7. Best Selling Section (With View All) --}}
-    @php
-        $best_selling_products = filter_products(\App\Models\Product::where('published', 1)->orderBy('num_of_sale', 'desc'))->take(8)->get();
-        if($best_selling_products->isEmpty()){
-            $best_selling_products = filter_products(\App\Models\Product::where('published', 1))->take(8)->get();
-        }
-    @endphp
-    @if($best_selling_products->count() > 0)
-    <div class="wrap">
-        <section class="sec best">
-            <div class="sechead">
-                <div>
-                    <h2 class="stitle">Best Selling</h2>
-                    <p class="stag">Loved by many, chosen by you</p>
-                </div>
-                <a class="vall" href="{{ route('search') }}?sort_by=num_of_sale">View all &rarr;</a>
-            </div>
-            <div class="bgrid">
-                @foreach($best_selling_products as $product)
-                    @php
-                        $has_discount = discount_in_percentage($product) > 0;
-                        $pb_has_options = (count(json_decode($product->colors)) > 0)
-                            || ($product->choice_options != null && count(json_decode($product->choice_options)) > 0)
-                            || ($product->sizes != null && is_array(json_decode($product->sizes, true)) && count(json_decode($product->sizes, true)) > 0);
-                        $product_sizes = ($product->sizes != null && is_array(json_decode($product->sizes, true))) ? json_decode($product->sizes, true) : [];
-                    @endphp
-                    <article class="pcard">
-                        <div class="pimg">
-                            <a href="{{ route('product', $product->slug) }}">
-                                <img src="{{ uploaded_asset($product->thumbnail_img) }}" alt="{{ $product->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
-                            </a>
-                            @if($has_discount)
-                                <span class="badge-disc">{{ discount_in_percentage($product) }}% OFF</span>
-                            @endif
-                            <button type="button" class="wish" onclick="addToWishList({{ $product->id }})" aria-label="Wishlist">
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 0L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-                            </button>
-                        </div>
-                        <div class="pbody">
-                            <h3>
-                                <a href="{{ route('product', $product->slug) }}" title="{{ $product->getTranslation('name') }}">
-                                    {{ Str::limit($product->getTranslation('name'), 45) }}
-                                </a>
-                            </h3>
-                            <div class="price">
-                                <b>{{ home_discounted_base_price($product) }}</b>
-                                @if(home_base_price($product) != home_discounted_base_price($product))
-                                    <s>{{ home_base_price($product) }}</s>
-                                @endif
-                            </div>
-                            <div class="sizes">
-                                @if(!empty($product_sizes))
-                                    @foreach(array_slice($product_sizes, 0, 5) as $size)
-                                        <span>{{ $size }}</span>
-                                    @endforeach
-                                @endif
-                            </div>
-                        </div>
-                        <div class="actions">
-                            <button type="button" class="cartbtn" onclick="addToCartDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})" aria-label="Add to cart">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a1.6 1.6 0 0 0 1.6 1.3h8.2a1.6 1.6 0 0 0 1.6-1.2L21 8H6"/></svg>
-                            </button>
-                            <button type="button" class="buy" onclick="buyNowDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})">Buy Now &rarr;</button>
-                        </div>
-                    </article>
-                @endforeach
-            </div>
-        </section>
-    </div>
-    @endif
-
-    {{-- 8. Customer Reviews --}}
+{{-- 8. Customer Reviews --}}
     <div class="wrap">
         <section class="sec reviews">
             <h2 class="stitle">Reviews</h2>
@@ -1141,13 +1316,65 @@
 
 @section('script')
 <script>
-    // Smooth scroll for arrow carousels
+    // Smooth mouse drag-to-scroll & swipe for all .track carousels
+    document.querySelectorAll('.wiseman-home .track').forEach(function(slider){
+        var isDown = false;
+        var startX = 0;
+        var scrollLeft = 0;
+        var hasDragged = false;
+
+        slider.addEventListener('mousedown', function(e){
+            if (e.button !== 0) return;
+            isDown = true;
+            hasDragged = false;
+            slider.classList.add('is-dragging');
+            startX = e.pageX - slider.offsetLeft;
+            scrollLeft = slider.scrollLeft;
+        });
+
+        slider.addEventListener('mouseleave', function(){
+            if (!isDown) return;
+            isDown = false;
+            slider.classList.remove('is-dragging');
+        });
+
+        slider.addEventListener('mouseup', function(){
+            if (!isDown) return;
+            isDown = false;
+            setTimeout(function(){
+                slider.classList.remove('is-dragging');
+            }, 60);
+        });
+
+        slider.addEventListener('mousemove', function(e){
+            if(!isDown) return;
+            e.preventDefault();
+            var x = e.pageX - slider.offsetLeft;
+            var walk = (x - startX) * 1.6;
+            if (Math.abs(walk) > 5) {
+                hasDragged = true;
+            }
+            slider.scrollLeft = scrollLeft - walk;
+        });
+
+        slider.addEventListener('click', function(e){
+            if(hasDragged){
+                e.preventDefault();
+                e.stopPropagation();
+                hasDragged = false;
+            }
+        }, true);
+    });
+
+    // Smooth scroll for remaining arrow carousels (if any)
     document.querySelectorAll('.wiseman-home .arrows').forEach(function(a){
         var t = document.getElementById(a.dataset.target);
         if (!t) return;
         var b = a.querySelectorAll('button');
-        b[0].onclick = function(){ t.scrollBy({left: -t.clientWidth * 0.8, behavior: 'smooth'}); };
-        b[1].onclick = function(){ t.scrollBy({left: t.clientWidth * 0.8, behavior: 'smooth'}); };
+        if (b && b.length >= 2) {
+            b[0].onclick = function(){ t.scrollBy({left: -t.clientWidth * 0.8, behavior: 'smooth'}); };
+            b[1].onclick = function(){ t.scrollBy({left: t.clientWidth * 0.8, behavior: 'smooth'}); };
+        }
     });
 
     // Real-time Countdown timer for Mega Deals

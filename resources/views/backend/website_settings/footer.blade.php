@@ -121,10 +121,12 @@
     					</div>
     				</div>
     			</div>
-                <div class="col-lg-12">
+                {{-- Link Widget One --}}
+                <div class="col-lg-6">
                     <div class="card shadow-none bg-light">
-    					<div class="card-header">
+    					<div class="card-header d-flex justify-content-between align-items-center">
     						<h6 class="mb-0">{{ translate('Link Widget One') }}</h6>
+                            <small class="text-muted">{{ translate('Column 1 links') }}</small>
     					</div>
     					<div class="card-body">
                             <form action="{{ route('business_settings.update') }}" method="POST" enctype="multipart/form-data">
@@ -141,15 +143,15 @@
     									<input type="hidden" name="types[]" value="widget_one_links">
     									@if (get_setting('widget_one_labels',null,$lang) != null)
     										@foreach (json_decode(get_setting('widget_one_labels',null,$lang), true) as $key => $value)
-    											<div class="row gutters-5">
+    											<div class="row gutters-5 mb-2">
     												<div class="col-4">
-    													<div class="form-group">
+    													<div class="form-group mb-0">
     														<input type="text" class="form-control" placeholder="{{translate('Label')}}" name="widget_one_labels[]" value="{{ $value }}">
     													</div>
     												</div>
     												<div class="col">
-    													<div class="form-group">
-    														<input type="text" class="form-control" placeholder="http://" name="widget_one_links[]" value="{{ json_decode(get_setting('widget_one_links'), true)[$key] }}">
+    													<div class="form-group mb-0">
+    														<input type="text" class="form-control" placeholder="http://" name="widget_one_links[]" value="{{ isset(json_decode(get_setting('widget_one_links'), true)[$key]) ? json_decode(get_setting('widget_one_links'), true)[$key] : '' }}">
     													</div>
     												</div>
     												<div class="col-auto">
@@ -163,16 +165,16 @@
     								</div>
     								<button
     									type="button"
-    									class="btn btn-soft-secondary btn-sm"
+    									class="btn btn-soft-secondary btn-sm mt-2"
     									data-toggle="add-more"
-    									data-content='<div class="row gutters-5">
+    									data-content='<div class="row gutters-5 mb-2">
     										<div class="col-4">
-    											<div class="form-group">
+    											<div class="form-group mb-0">
     												<input type="text" class="form-control" placeholder="{{translate('Label')}}" name="widget_one_labels[]">
     											</div>
     										</div>
     										<div class="col">
-    											<div class="form-group">
+    											<div class="form-group mb-0">
     												<input type="text" class="form-control" placeholder="http://" name="widget_one_links[]">
     											</div>
     										</div>
@@ -183,6 +185,81 @@
     										</div>
     									</div>'
     									data-target=".w3-links-target">
+    									{{ translate('Add New') }}
+    								</button>
+    							</div>
+    							<div class="text-right">
+    								<button type="submit" class="btn btn-primary">{{ translate('Update') }}</button>
+    							</div>
+    						</form>
+    					</div>
+    				</div>
+    			</div>
+
+                {{-- Link Widget Two --}}
+                <div class="col-lg-6">
+                    <div class="card shadow-none bg-light">
+    					<div class="card-header d-flex justify-content-between align-items-center">
+    						<h6 class="mb-0">{{ translate('Link Widget Two') }}</h6>
+                            <small class="text-muted">{{ translate('Column 2 links') }}</small>
+    					</div>
+    					<div class="card-body">
+                            <form action="{{ route('business_settings.update') }}" method="POST" enctype="multipart/form-data">
+                                @csrf
+    							<div class="form-group">
+    								<label>{{ translate('Title') }} ({{ translate('Translatable') }})</label>
+    								<input type="hidden" name="types[][{{ $lang }}]" value="widget_two">
+    								<input type="text" class="form-control" placeholder="Widget title" name="widget_two" value="{{ get_setting('widget_two',null,$lang) }}">
+    							</div>
+    			                <div class="form-group">
+    								<label>{{ translate('Links') }} - ({{ translate('Translatable') }} {{ translate('Label') }})</label>
+    								<div class="w4-links-target">
+    									<input type="hidden" name="types[][{{ $lang }}]" value="widget_two_labels">
+    									<input type="hidden" name="types[]" value="widget_two_links">
+    									@if (get_setting('widget_two_labels',null,$lang) != null)
+    										@foreach (json_decode(get_setting('widget_two_labels',null,$lang), true) as $key => $value)
+    											<div class="row gutters-5 mb-2">
+    												<div class="col-4">
+    													<div class="form-group mb-0">
+    														<input type="text" class="form-control" placeholder="{{translate('Label')}}" name="widget_two_labels[]" value="{{ $value }}">
+    													</div>
+    												</div>
+    												<div class="col">
+    													<div class="form-group mb-0">
+    														<input type="text" class="form-control" placeholder="http://" name="widget_two_links[]" value="{{ isset(json_decode(get_setting('widget_two_links'), true)[$key]) ? json_decode(get_setting('widget_two_links'), true)[$key] : '' }}">
+    													</div>
+    												</div>
+    												<div class="col-auto">
+    													<button type="button" class="mt-1 btn btn-icon btn-circle btn-sm btn-soft-danger" data-toggle="remove-parent" data-parent=".row">
+    														<i class="las la-times"></i>
+    													</button>
+    												</div>
+    											</div>
+    										@endforeach
+    									@endif
+    								</div>
+    								<button
+    									type="button"
+    									class="btn btn-soft-secondary btn-sm mt-2"
+    									data-toggle="add-more"
+    									data-content='<div class="row gutters-5 mb-2">
+    										<div class="col-4">
+    											<div class="form-group mb-0">
+    												<input type="text" class="form-control" placeholder="{{translate('Label')}}" name="widget_two_labels[]">
+    											</div>
+    										</div>
+    										<div class="col">
+    											<div class="form-group mb-0">
+    												<input type="text" class="form-control" placeholder="http://" name="widget_two_links[]">
+    											</div>
+    										</div>
+    										<div class="col-auto">
+    											<button type="button" class="mt-1 btn btn-icon btn-circle btn-sm btn-soft-danger" data-toggle="remove-parent" data-parent=".row">
+    														<i class="las la-times"></i>
+    													</button>
+    										</div>
+    									</div>'
+    									data-target=".w4-links-target">
     									{{ translate('Add New') }}
     								</button>
     							</div>

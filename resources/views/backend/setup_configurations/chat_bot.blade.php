@@ -64,12 +64,16 @@
                 </div>
             </div>
             <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0 h6">{{ translate('Chatbot AI') }}</h5>
+                <div class="card-header bg-soft-success">
+                    <h5 class="mb-0 h6 text-success font-weight-bold">
+                        <i class="las la-robot mr-1"></i> {{ translate('Tawk.to AI Chatbot') }}
+                    </h5>
                 </div>
                 <div class="card-body">
-                    <p class="mb-3">{{ translate('AI powered chatbot feature is under construction. It will be available here very soon.') }}</p>
-                    <a href="{{ route('chatbot.ai') }}" class="btn btn-sm btn-soft-primary">{{ translate('Open Chatbot AI') }}</a>
+                    <p class="mb-3">{{ translate('Configure your Tawk.to AI Chatbot with Property ID, Widget ID, Messenger, and WhatsApp.') }}</p>
+                    <a href="{{ route('chatbot.ai') }}" class="btn btn-sm btn-success">
+                        <i class="las la-cog mr-1"></i> {{ translate('Configure AI Chatbot') }}
+                    </a>
                 </div>
             </div>
         </div>

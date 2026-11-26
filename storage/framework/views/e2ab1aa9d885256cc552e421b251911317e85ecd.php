@@ -106,4 +106,32 @@
         })();
     </script>
 <?php endif; ?>
+
+
+<?php if(get_setting('tawk_status') == 1): ?>
+    <?php
+        $tawk_property_id = trim((string) get_setting('tawk_property_id'));
+        $tawk_widget_id = trim((string) get_setting('tawk_widget_id')) ?: 'default';
+        $tawk_embed_code = get_setting('tawk_embed_code');
+    ?>
+
+    <?php if(!empty($tawk_embed_code)): ?>
+        <?php echo $tawk_embed_code; ?>
+
+    <?php elseif(!empty($tawk_property_id)): ?>
+        <!-- Start of Tawk.to Live / AI Chatbot Script -->
+        <script type="text/javascript">
+            var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
+            (function(){
+                var s1 = document.createElement("script"), s0 = document.getElementsByTagName("script")[0];
+                s1.async = true;
+                s1.src = 'https://embed.tawk.to/<?php echo e($tawk_property_id); ?>/<?php echo e($tawk_widget_id); ?>';
+                s1.charset = 'UTF-8';
+                s1.setAttribute('crossorigin', '*');
+                s0.parentNode.insertBefore(s1, s0);
+            })();
+        </script>
+        <!-- End of Tawk.to Live / AI Chatbot Script -->
+    <?php endif; ?>
+<?php endif; ?>
 <?php /**PATH E:\xampp\htdocs\1_Asystem\wisemanbd.com\resources\views/frontend/inc/chat_widget.blade.php ENDPATH**/ ?>

@@ -518,6 +518,38 @@
                                 </div>
                             </div>
 
+                            <?php
+                                $measurement_img_url = null;
+                                if ($detailedProduct->measurement_active == 1 && !empty($detailedProduct->measurement_img)) {
+                                    if (is_numeric($detailedProduct->measurement_img)) {
+                                        $measurement_img_url = uploaded_asset($detailedProduct->measurement_img);
+                                    } elseif (\Illuminate\Support\Str::startsWith($detailedProduct->measurement_img, ['http://', 'https://'])) {
+                                        $measurement_img_url = $detailedProduct->measurement_img;
+                                    } else {
+                                        $measurement_img_url = static_asset($detailedProduct->measurement_img);
+                                    }
+                                }
+                            ?>
+                            <?php if($measurement_img_url): ?>
+                                <div class="product-measurement-chart my-3">
+                                    <div class="border rounded p-2 bg-white text-center shadow-sm" style="border-color:#e4daf0 !important;">
+                                        <div class="d-flex align-items-center justify-content-between mb-2 px-1">
+                                            <span class="font-weight-bold text-dark fs-13 text-uppercase" style="letter-spacing: 0.5px;">
+                                                <i class="las la-ruler-combined text-primary mr-1 fs-15"></i> <?php echo e(translate('Size Measurement Chart')); ?>
+
+                                            </span>
+                                            <a href="<?php echo e($measurement_img_url); ?>" target="_blank" class="text-primary fs-12 font-weight-bold" style="text-decoration:none;">
+                                                <i class="las la-search-plus"></i> <?php echo e(translate('Click to enlarge')); ?>
+
+                                            </a>
+                                        </div>
+                                        <a href="<?php echo e($measurement_img_url); ?>" target="_blank" title="<?php echo e(translate('Click to view full measurement chart')); ?>">
+                                            <img src="<?php echo e($measurement_img_url); ?>" alt="<?php echo e($detailedProduct->getTranslation('name')); ?> - <?php echo e(translate('Measurement Chart')); ?>" class="img-fluid rounded w-100" style="max-height: 480px; object-fit: contain; cursor: zoom-in; display: block; margin: 0 auto;">
+                                        </a>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
                             <div class="product-quick-description">
                                 <h2><?php echo e($detailedProduct->getTranslation('name')); ?></h2>
                                 <p><?php echo e(\Illuminate\Support\Str::limit(trim(preg_replace('/\s+/', ' ', strip_tags($detailedProduct->getTranslation('description')))), 420)); ?></p>

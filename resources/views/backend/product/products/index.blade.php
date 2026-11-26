@@ -101,6 +101,7 @@
                             <th data-breakpoints="lg">{{translate('Approved')}}</th>
                         @endif
                         <th data-breakpoints="lg">{{translate('New Arrival')}}</th>
+                        <th data-breakpoints="lg">{{translate('11.11 Mega Sale')}}</th>
                         <th data-breakpoints="sm" class="text-right">{{translate('Options')}}</th>
                     </tr>
                 </thead>
@@ -177,6 +178,12 @@
                         <td>
                             <label class="aiz-switch aiz-switch-success mb-0">
                                 <input onchange="update_featured(this)" value="{{ $product->id }}" type="checkbox" <?php if ($product->featured == 1) echo "checked"; ?> >
+                                <span class="slider round"></span>
+                            </label>
+                        </td>
+                        <td>
+                            <label class="aiz-switch aiz-switch-success mb-0">
+                                <input onchange="update_mega_deal(this)" value="{{ $product->id }}" type="checkbox" <?php if ($product->mega_deal == 1) echo "checked"; ?> >
                                 <span class="slider round"></span>
                             </label>
                         </td>
@@ -304,6 +311,23 @@
             $.post('{{ route('products.featured') }}', {_token:'{{ csrf_token() }}', id:el.value, status:status}, function(data){
                 if(data == 1){
                     AIZ.plugins.notify('success', '{{ translate('Featured products updated successfully') }}');
+                }
+                else{
+                    AIZ.plugins.notify('danger', '{{ translate('Something went wrong') }}');
+                }
+            });
+        }
+
+        function update_mega_deal(el){
+            if(el.checked){
+                var status = 1;
+            }
+            else{
+                var status = 0;
+            }
+            $.post('{{ route('products.mega_deal') }}', {_token:'{{ csrf_token() }}', id:el.value, status:status}, function(data){
+                if(data == 1){
+                    AIZ.plugins.notify('success', '{{ translate('11.11 Mega Sale updated successfully') }}');
                 }
                 else{
                     AIZ.plugins.notify('danger', '{{ translate('Something went wrong') }}');

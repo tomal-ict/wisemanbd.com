@@ -106,3 +106,30 @@
         })();
     </script>
 @endif
+
+{{-- Tawk.to AI Chatbot Integration --}}
+@if (get_setting('tawk_status') == 1)
+    @php
+        $tawk_property_id = trim((string) get_setting('tawk_property_id'));
+        $tawk_widget_id = trim((string) get_setting('tawk_widget_id')) ?: 'default';
+        $tawk_embed_code = get_setting('tawk_embed_code');
+    @endphp
+
+    @if (!empty($tawk_embed_code))
+        {!! $tawk_embed_code !!}
+    @elseif (!empty($tawk_property_id))
+        <!-- Start of Tawk.to Live / AI Chatbot Script -->
+        <script type="text/javascript">
+            var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
+            (function(){
+                var s1 = document.createElement("script"), s0 = document.getElementsByTagName("script")[0];
+                s1.async = true;
+                s1.src = 'https://embed.tawk.to/{{ $tawk_property_id }}/{{ $tawk_widget_id }}';
+                s1.charset = 'UTF-8';
+                s1.setAttribute('crossorigin', '*');
+                s0.parentNode.insertBefore(s1, s0);
+            })();
+        </script>
+        <!-- End of Tawk.to Live / AI Chatbot Script -->
+    @endif
+@endif

@@ -287,6 +287,29 @@ class ProductController extends Controller
             $product->sizes = json_encode(array());
         }
 
+        $product->measurement_active = $request->has('measurement_active') ? 1 : 0;
+        if ($request->filled('measurement_cropped_data')) {
+            $cropData = $request->measurement_cropped_data;
+            if (preg_match('/^data:image\/(\w+);base64,/', $cropData, $type)) {
+                $cropData = substr($cropData, strpos($cropData, ',') + 1);
+                $type = strtolower($type[1]);
+                $cropData = base64_decode($cropData);
+                if ($cropData !== false) {
+                    $dir = public_path('uploads/products/measurements');
+                    if (!file_exists($dir)) {
+                        mkdir($dir, 0777, true);
+                    }
+                    $filename = 'measurement_' . time() . '_' . \Illuminate\Support\Str::random(8) . '.' . $type;
+                    file_put_contents($dir . '/' . $filename, $cropData);
+                    $product->measurement_img = 'uploads/products/measurements/' . $filename;
+                }
+            }
+        } elseif ($request->filled('measurement_img')) {
+            $product->measurement_img = $request->measurement_img;
+        } elseif ($request->has('remove_measurement_img') && $request->remove_measurement_img == 1) {
+            $product->measurement_img = null;
+        }
+
         $choice_options = array();
 
         if($request->has('choice_no')){
@@ -705,6 +728,29 @@ class ProductController extends Controller
             $product->sizes = json_encode(array());
         }
 
+        $product->measurement_active = $request->has('measurement_active') ? 1 : 0;
+        if ($request->filled('measurement_cropped_data')) {
+            $cropData = $request->measurement_cropped_data;
+            if (preg_match('/^data:image\/(\w+);base64,/', $cropData, $type)) {
+                $cropData = substr($cropData, strpos($cropData, ',') + 1);
+                $type = strtolower($type[1]);
+                $cropData = base64_decode($cropData);
+                if ($cropData !== false) {
+                    $dir = public_path('uploads/products/measurements');
+                    if (!file_exists($dir)) {
+                        mkdir($dir, 0777, true);
+                    }
+                    $filename = 'measurement_' . time() . '_' . \Illuminate\Support\Str::random(8) . '.' . $type;
+                    file_put_contents($dir . '/' . $filename, $cropData);
+                    $product->measurement_img = 'uploads/products/measurements/' . $filename;
+                }
+            }
+        } elseif ($request->filled('measurement_img')) {
+            $product->measurement_img = $request->measurement_img;
+        } elseif ($request->has('remove_measurement_img') && $request->remove_measurement_img == 1) {
+            $product->measurement_img = null;
+        }
+
         $choice_options = array();
 
         if($request->has('choice_no')){
@@ -1052,6 +1098,43 @@ class ProductController extends Controller
         $product = Product::findOrFail($request->id);
         $product->featured = $request->status;
         if($product->save()){
+            Artisan::call('view:clear');
+            Artisan::call('cache:clear');
+            return 1;
+        }
+        return 0;
+    }
+
+    public function updateMegaDeal(Request $request)
+    {
+        $product = Product::findOrFail($request->id);
+        $product->mega_deal = $request->status;
+        if($product->save()){
+            // Sync with active FlashDeal / Mega Sale if exists
+            $flash_deal = \App\Models\FlashDeal::where('status', 1)->where('featured', 1)->first();
+            if (!$flash_deal) {
+                $flash_deal = \App\Models\FlashDeal::where('status', 1)->first();
+            }
+            if ($flash_deal) {
+                if ($request->status == 1) {
+                    $fd_prod = \App\Models\FlashDealProduct::where('flash_deal_id', $flash_deal->id)
+                        ->where('product_id', $product->id)
+                        ->first();
+                    if (!$fd_prod) {
+                        $fd_prod = new \App\Models\FlashDealProduct;
+                        $fd_prod->flash_deal_id = $flash_deal->id;
+                        $fd_prod->product_id = $product->id;
+                        $fd_prod->discount = $product->discount ?: 0;
+                        $fd_prod->discount_type = $product->discount_type ?: 'percent';
+                        $fd_prod->save();
+                    }
+                } else {
+                    \App\Models\FlashDealProduct::where('flash_deal_id', $flash_deal->id)
+                        ->where('product_id', $product->id)
+                        ->delete();
+                }
+            }
+
             Artisan::call('view:clear');
             Artisan::call('cache:clear');
             return 1;

@@ -36,6 +36,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin']], function(
     Route::get('/products/seller/{id}/edit', 'ProductController@seller_product_edit')->name('products.seller.edit');
     Route::post('/products/todays_deal', 'ProductController@updateTodaysDeal')->name('products.todays_deal');
     Route::post('/products/featured', 'ProductController@updateFeatured')->name('products.featured');
+    Route::post('/products/mega_deal', 'ProductController@updateMegaDeal')->name('products.mega_deal');
     Route::post('/products/approved', 'ProductController@updateProductApproval')->name('products.approved');
     Route::post('/products/get_products_by_subcategory', 'ProductController@get_products_by_subcategory')->name('products.get_products_by_subcategory');
     Route::post('/bulk-product-delete', 'ProductController@bulk_product_delete')->name('bulk-product-delete');
@@ -90,6 +91,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin']], function(
     Route::get('/chatbot', 'BusinessSettingsController@chatbot')->name('chatbot.index');
     Route::post('/chatbot', 'BusinessSettingsController@chatbot_update')->name('chatbot.update');
     Route::get('/chatbot-ai', 'BusinessSettingsController@chatbot_ai')->name('chatbot.ai');
+    Route::post('/chatbot-ai', 'BusinessSettingsController@chatbot_ai_update')->name('chatbot_ai.update');
 
     Route::post('/env_key_update', 'BusinessSettingsController@env_key_update')->name('env_key_update.update');
     Route::post('/payment_method_update', 'BusinessSettingsController@payment_method_update')->name('payment_method.update');

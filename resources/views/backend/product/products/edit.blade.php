@@ -705,7 +705,7 @@
 
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-0 h6">{{translate('Colors & Sizes')}}</h5>
+                        <h5 class="mb-0 h6">{{translate('Colors, Sizes & Measurement')}}</h5>
                     </div>
                     <div class="card-body">
                         <div class="form-group row gutters-5">
@@ -746,6 +746,77 @@
                                 </select>
                             </div>
                         </div>
+
+                        <div class="form-group row gutters-5 align-items-center">
+                            <div class="col-lg-3">
+                                <input type="text" class="form-control" value="{{translate('Measurement')}}" disabled>
+                            </div>
+                            <div class="col-lg-8">
+                                <span class="text-muted fs-13">{{ translate('Enable Size Measurement Chart for this product') }}</span>
+                            </div>
+                            <div class="col-lg-1">
+                                <label class="aiz-switch aiz-switch-success mb-0" title="{{ translate('Enable/Disable Measurement') }}">
+                                    <input value="1" type="checkbox" name="measurement_active" id="measurement_active" <?php if ($product->measurement_active == 1) echo "checked"; ?> onchange="toggleMeasurementSection()">
+                                    <span></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="measurement_section_body" style="{{ $product->measurement_active == 1 ? '' : 'display:none;' }}" class="p-3 bg-soft-light rounded border mt-2">
+                            <div class="form-group row gutters-5">
+                                <label class="col-lg-3 col-from-label font-weight-bold">{{translate('Measurement Image')}}</label>
+                                <div class="col-lg-9">
+                                    <div class="input-group" data-toggle="aizuploader" data-type="image">
+                                        <div class="input-group-prepend">
+                                            <div class="input-group-text bg-soft-secondary font-weight-medium">{{ translate('Browse')}}</div>
+                                        </div>
+                                        <div class="form-control file-amount">{{ translate('Choose File') }}</div>
+                                        <input type="hidden" name="measurement_img" id="measurement_img_input" value="{{ $product->measurement_img }}" class="selected-files" onchange="onGalleryImageSelected(this.value)">
+                                    </div>
+                                    <div class="file-preview box sm"></div>
+
+                                    <div class="mt-2 d-flex align-items-center flex-wrap">
+                                        <label class="btn btn-sm btn-outline-primary mb-0 mr-2" for="measurement_file_input" style="cursor: pointer;">
+                                            <i class="las la-crop-alt mr-1"></i> {{ translate('Upload & Crop Image') }}
+                                        </label>
+                                        <input type="file" id="measurement_file_input" accept="image/*" style="display: none;">
+                                        <span class="text-muted fs-12">{{ translate('Or upload a local image to crop accurately') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <input type="hidden" name="measurement_cropped_data" id="measurement_cropped_data" value="">
+                            <input type="hidden" name="remove_measurement_img" id="remove_measurement_img" value="0">
+
+                            @php
+                                $current_meas_url = null;
+                                if(!empty($product->measurement_img)) {
+                                    if (is_numeric($product->measurement_img)) {
+                                        $current_meas_url = uploaded_asset($product->measurement_img);
+                                    } elseif (\Illuminate\Support\Str::startsWith($product->measurement_img, ['http://', 'https://'])) {
+                                        $current_meas_url = $product->measurement_img;
+                                    } else {
+                                        $current_meas_url = static_asset($product->measurement_img);
+                                    }
+                                }
+                            @endphp
+
+                            <div class="form-group row gutters-5 mb-0" id="measurement_preview_wrapper" style="{{ $current_meas_url ? '' : 'display:none;' }}">
+                                <label class="col-lg-3 col-from-label">{{translate('Active Chart Preview')}}</label>
+                                <div class="col-lg-9">
+                                    <div class="p-2 border rounded bg-white d-inline-block text-center position-relative shadow-sm" style="max-width: 360px; width:100%;">
+                                        <div style="background:#f8f9fa; padding:6px; border-radius:4px; max-height:240px; overflow:hidden;" class="d-flex align-items-center justify-content-center">
+                                            <img id="measurement_live_preview" src="{{ $current_meas_url ?? '' }}" class="img-fluid" style="max-height: 220px; object-fit: contain;">
+                                        </div>
+                                        <div class="mt-2 d-flex justify-content-between align-items-center">
+                                            <button type="button" class="btn btn-xs btn-outline-danger" onclick="removeMeasurementChart()"><i class="las la-trash"></i> {{ translate('Remove') }}</button>
+                                            <a id="measurement_preview_link" href="{{ $current_meas_url ?? '#' }}" target="_blank" class="btn btn-xs btn-outline-primary"><i class="las la-external-link-alt"></i> {{ translate('View Full Size') }}</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -759,9 +830,147 @@
     </form>
 </div>
 
+<!-- Cropper Modal -->
+<div class="modal fade" id="cropperModal" tabindex="-1" role="dialog" aria-labelledby="cropperModalLabel" aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title font-weight-bold" id="cropperModalLabel"><i class="las la-crop-alt mr-1"></i> {{ translate('Crop Measurement Chart') }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-0">
+                <div style="max-height: 480px; height: 480px; background: #1a1a1a;" class="d-flex align-items-center justify-content-center">
+                    <img id="cropperImage" src="" style="max-width: 100%; max-height: 100%; display: block;">
+                </div>
+                <div class="p-3 bg-light d-flex flex-wrap justify-content-between align-items-center">
+                    <span class="text-muted fs-12 mb-1"><i class="las la-arrows-alt mr-1"></i> {{ translate('Drag and adjust handles to crop the chart accurately.') }}</span>
+                    <div class="btn-group btn-group-sm mb-1">
+                        <button type="button" class="btn btn-secondary" onclick="cropperZoom(0.1)" title="{{ translate('Zoom In') }}"><i class="las la-search-plus"></i></button>
+                        <button type="button" class="btn btn-secondary" onclick="cropperZoom(-0.1)" title="{{ translate('Zoom Out') }}"><i class="las la-search-minus"></i></button>
+                        <button type="button" class="btn btn-secondary" onclick="cropperRotate(90)" title="{{ translate('Rotate') }}"><i class="las la-redo-alt"></i></button>
+                        <button type="button" class="btn btn-secondary" onclick="cropperReset()" title="{{ translate('Reset') }}"><i class="las la-sync"></i> {{ translate('Reset') }}</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">{{ translate('Cancel') }}</button>
+                <button type="button" class="btn btn-primary font-weight-bold" id="applyCropBtn"><i class="las la-check mr-1"></i> {{ translate('Crop & Apply') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @section('script')
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+<script type="text/javascript">
+    var cropperInstance = null;
+
+    function toggleMeasurementSection() {
+        if ($('#measurement_active').is(':checked')) {
+            $('#measurement_section_body').slideDown();
+        } else {
+            $('#measurement_section_body').slideUp();
+        }
+    }
+
+    function removeMeasurementChart() {
+        $('#measurement_cropped_data').val('');
+        $('#measurement_img_input').val('');
+        $('#remove_measurement_img').val('1');
+        $('#measurement_preview_wrapper').hide();
+        $('#measurement_live_preview').attr('src', '');
+        $('#measurement_file_input').val('');
+        $('#measurement_file_label').text('Choose local image to crop & apply...');
+    }
+
+    function onGalleryImageSelected(val) {
+        if(val) {
+            $('#remove_measurement_img').val('0');
+            $('#measurement_cropped_data').val('');
+        }
+    }
+
+    $('#measurement_file_input').on('change', function(e) {
+        var files = e.target.files;
+        if (files && files.length > 0) {
+            var file = files[0];
+            $('#measurement_file_label').text(file.name);
+            var reader = new FileReader();
+            reader.onload = function(evt) {
+                $('#cropperImage').attr('src', evt.target.result);
+                $('#cropperModal').modal('show');
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    $('#cropperModal').on('shown.bs.modal', function () {
+        var image = document.getElementById('cropperImage');
+        if (cropperInstance) {
+            cropperInstance.destroy();
+        }
+        cropperInstance = new Cropper(image, {
+            viewMode: 1,
+            autoCropArea: 0.95,
+            responsive: true,
+            restore: false,
+            movable: true,
+            rotatable: true,
+            scalable: true,
+            zoomable: true,
+            zoomOnTouch: true,
+            zoomOnWheel: true,
+        });
+    }).on('hidden.bs.modal', function () {
+        if (cropperInstance) {
+            cropperInstance.destroy();
+            cropperInstance = null;
+        }
+    });
+
+    function cropperZoom(ratio) {
+        if (cropperInstance) {
+            cropperInstance.zoom(ratio);
+        }
+    }
+
+    function cropperRotate(deg) {
+        if (cropperInstance) {
+            cropperInstance.rotate(deg);
+        }
+    }
+
+    function cropperReset() {
+        if (cropperInstance) {
+            cropperInstance.reset();
+        }
+    }
+
+    $('#applyCropBtn').on('click', function() {
+        if (cropperInstance) {
+            var canvas = cropperInstance.getCroppedCanvas({
+                maxWidth: 1600,
+                maxHeight: 1600,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+            if (canvas) {
+                var base64data = canvas.toDataURL('image/jpeg', 0.92);
+                $('#measurement_cropped_data').val(base64data);
+                $('#remove_measurement_img').val('0');
+                $('#measurement_live_preview').attr('src', base64data);
+                $('#measurement_preview_link').attr('href', base64data);
+                $('#measurement_preview_wrapper').show();
+                $('#cropperModal').modal('hide');
+            }
+        }
+    });
 
 <script type="text/javascript">
     $(document).ready(function (){

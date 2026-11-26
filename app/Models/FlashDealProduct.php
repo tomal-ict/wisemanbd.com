@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class FlashDealProduct extends Model
 {
-    //
+    protected $guarded = [];
 }
