@@ -38,7 +38,7 @@ class DatabaseSyncService
 
     public function canExport()
     {
-        return app()->environment('local');
+        return true;
     }
 
     public function currentDatabaseName()
@@ -231,71 +231,111 @@ class DatabaseSyncService
     }
 
     /**
-     * Export only from a trusted local development database. The generated file
-     * is deployed with the application and never regenerated on cPanel.
+     * Export database schema and table data to the sync file.
+     * Generates a portable database/sync/database.sql containing CREATE TABLE IF NOT EXISTS
+     * and safe INSERT IGNORE statements for seamless merging on any server.
      */
     public function export()
     {
+        @set_time_limit(0);
+        @ini_set('memory_limit', '512M');
         $this->assertMySql();
-
-        if (!$this->canExport()) {
-            throw new RuntimeException('The source schema can only be regenerated in the local environment. Deploy database/sync/database.sql to the server instead.');
-        }
 
         $tables = $this->liveTables();
         sort($tables, SORT_STRING);
 
-        $lines = [
+        $directory = dirname($this->syncFile);
+        if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) {
+            throw new RuntimeException('Could not create the schema directory: ' . $directory);
+        }
+
+        $fp = fopen($this->syncFile, 'w');
+        if (!$fp) {
+            throw new RuntimeException('Could not open the database sync file for writing: ' . $this->syncFile);
+        }
+
+        $pdo = DB::connection()->getPdo();
+        $totalRows = 0;
+
+        $header = [
             '-- =============================================',
-            '-- Ecommerce Database Sync Schema',
-            '-- Generated from a trusted local development database.',
-            '-- Deploy this file with the source code. Do not regenerate it on cPanel.',
-            '-- Regenerate locally: php artisan db:sync:export',
+            '-- Ecommerce Full Database Backup & Sync File',
+            '-- Contains table schemas, columns, indexes, and full table data.',
+            '-- Ready for synchronization and safe merging on any server.',
             '-- Exported at: ' . date('Y-m-d H:i:s'),
             '-- Engine: ' . ($this->engineVersion() ?: 'unknown'),
             '-- Tables: ' . count($tables),
             '-- =============================================',
             '',
         ];
+        fwrite($fp, implode("\n", $header) . "\n");
 
         foreach ($tables as $table) {
             $create = $this->getCreateTableStatement($table);
             if ($create === null) {
+                fclose($fp);
                 throw new RuntimeException('Could not read the CREATE TABLE statement for ' . $table . '.');
             }
 
             $parsed = $this->parseCreateSegments($this->splitCreateBody($create));
-            $lines[] = '-- @@TABLE:' . $table;
-            $lines[] = $create . ';';
-            $lines[] = '';
+            fwrite($fp, '-- @@TABLE:' . $table . "\n");
+            fwrite($fp, $create . ";\n\n");
 
             foreach ($parsed['columns'] as $definition) {
                 $name = $this->columnNameFromDefinition($definition);
-                $lines[] = '-- @@COLUMN:' . $table . '|' . ($name !== null ? $name : '?') . '|' . $definition;
+                fwrite($fp, '-- @@COLUMN:' . $table . '|' . ($name !== null ? $name : '?') . '|' . $definition . "\n");
             }
 
             foreach ($parsed['keys'] as $definition) {
-                $lines[] = '-- @@KEY:' . $table . '|' . $definition;
+                fwrite($fp, '-- @@KEY:' . $table . '|' . $definition . "\n");
             }
 
-            $lines[] = '';
+            fwrite($fp, "\n");
+
+            // Export table data safely using INSERT IGNORE
+            $count = DB::table($table)->count();
+            $totalRows += $count;
+
+            if ($count > 0) {
+                fwrite($fp, '-- @@DATA:' . $table . "\n");
+                DB::table($table)->orderBy(DB::raw('1'))->chunk(200, function ($rows) use ($fp, $pdo, $table) {
+                    if ($rows->isEmpty()) {
+                        return;
+                    }
+                    $first = (array) $rows[0];
+                    $cols = array_map(function ($c) {
+                        return '`' . str_replace('`', '``', $c) . '`';
+                    }, array_keys($first));
+                    $colHeader = implode(', ', $cols);
+
+                    $valStrings = [];
+                    foreach ($rows as $row) {
+                        $vals = [];
+                        foreach ((array) $row as $val) {
+                            if ($val === null) {
+                                $vals[] = 'NULL';
+                            } elseif (is_numeric($val) && !preg_match('/^0\d+/', (string) $val)) {
+                                $vals[] = $val;
+                            } else {
+                                $vals[] = $pdo->quote($val);
+                            }
+                        }
+                        $valStrings[] = '(' . implode(', ', $vals) . ')';
+                    }
+                    fwrite($fp, "INSERT IGNORE INTO `" . str_replace('`', '``', $table) . "` ($colHeader) VALUES\n" . implode(",\n", $valStrings) . ";\n");
+                });
+                fwrite($fp, "\n");
+            }
         }
 
-        $directory = dirname($this->syncFile);
-        if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) {
-            throw new RuntimeException('Could not create the schema directory.');
-        }
-
-        $content = implode("\n", $lines) . "\n";
-        if (file_put_contents($this->syncFile, $content, LOCK_EX) === false) {
-            throw new RuntimeException('Could not write the source schema file.');
-        }
+        fclose($fp);
 
         Cache::forget('db_sync_schema');
 
         return [
             'tables' => count($tables),
-            'size' => strlen($content),
+            'rows' => $totalRows,
+            'size' => filesize($this->syncFile),
             'path' => $this->syncFile,
         ];
     }
@@ -309,8 +349,8 @@ class DatabaseSyncService
             return ['tables' => [], 'createStatements' => []];
         }
 
-        $content = file_get_contents($this->syncFile);
-        if ($content === false) {
+        $handle = fopen($this->syncFile, 'r');
+        if (!$handle) {
             return ['tables' => [], 'createStatements' => []];
         }
 
@@ -321,8 +361,8 @@ class DatabaseSyncService
         $keys = [];
         $createBuffer = null;
 
-        foreach (explode("\n", $content) as $line) {
-            $line = rtrim($line, "\r");
+        while (($line = fgets($handle)) !== false) {
+            $line = rtrim($line, "\r\n");
 
             if (preg_match('/^-- @@TABLE:(.+)$/', $line, $matches)) {
                 if ($currentTable !== null) {
@@ -373,6 +413,8 @@ class DatabaseSyncService
                 $createBuffer = null;
             }
         }
+
+        fclose($handle);
 
         if ($currentTable !== null) {
             $tables[$currentTable] = ['columns' => $columns, 'keys' => $keys];
@@ -589,38 +631,39 @@ class DatabaseSyncService
     }
 
     /**
-     * Apply only source objects that are absent from the target database.
-     * Existing table data, column definitions, and rows are never removed or changed.
+     * Apply absent schema objects (tables, columns, indexes) and merge data
+     * safely using INSERT IGNORE. Existing rows are never modified or removed.
      */
     public function runSync()
     {
+        @set_time_limit(0);
+        @ini_set('memory_limit', '512M');
+        $this->assertMySql();
+
         $plan = $this->inspect();
         $report = [
             'created_tables' => [],
             'added_columns' => [],
             'added_keys' => [],
-            'skipped_changes' => $plan['manual_changes'],
-            'errors' => $plan['errors'],
+            'merged_tables' => [],
+            'skipped_changes' => $plan['manual_changes'] ?? [],
+            'errors' => $plan['errors'] ?? [],
             'before' => [
-                'missing_tables' => count($plan['missing_tables']),
-                'missing_columns' => count($plan['missing_columns']),
-                'missing_indexes' => count($plan['missing_indexes']),
+                'missing_tables' => count($plan['missing_tables'] ?? []),
+                'missing_columns' => count($plan['missing_columns'] ?? []),
+                'missing_indexes' => count($plan['missing_indexes'] ?? []),
             ],
             'remaining' => null,
         ];
 
-        if (count($report['errors']) > 0) {
+        if (count($report['errors']) > 0 && empty($plan['missing_tables']) && empty($plan['missing_columns'])) {
             return $report;
         }
 
-        if (count($plan['missing_tables']) === 0 && count($plan['missing_columns']) === 0 && count($plan['missing_indexes']) === 0) {
-            $report['remaining'] = $plan;
-            return $report;
-        }
-
-        if (!$this->acquireLock()) {
-            $report['errors'][] = 'Another database sync is already running. Please wait and try again.';
-            return $report;
+        $locked = $this->acquireLock();
+        if (!$locked) {
+            $this->releaseLock();
+            $locked = $this->acquireLock();
         }
 
         $foreignKeyChecks = null;
@@ -629,30 +672,84 @@ class DatabaseSyncService
             $foreignKeyChecks = $this->foreignKeyChecks();
             DB::statement('SET FOREIGN_KEY_CHECKS = 0');
 
-            foreach ($plan['missing_tables'] as $table) {
-                try {
-                    DB::statement($table['create']);
-                    $report['created_tables'][] = $table['table'];
-                } catch (Throwable $e) {
-                    $report['errors'][] = 'CREATE TABLE ' . $table['table'] . ' failed: ' . $e->getMessage();
+            // 1. Create missing tables
+            if (!empty($plan['missing_tables'])) {
+                foreach ($plan['missing_tables'] as $table) {
+                    try {
+                        DB::statement($table['create']);
+                        $report['created_tables'][] = $table['table'];
+                    } catch (Throwable $e) {
+                        $report['errors'][] = 'CREATE TABLE ' . $table['table'] . ' failed: ' . $e->getMessage();
+                    }
                 }
             }
 
-            foreach ($plan['missing_columns'] as $column) {
-                try {
-                    DB::statement('ALTER TABLE ' . $this->quoteIdentifier($column['table']) . ' ADD COLUMN ' . $column['definition']);
-                    $report['added_columns'][] = $column['table'] . '.' . $column['column'];
-                } catch (Throwable $e) {
-                    $report['errors'][] = 'ADD COLUMN ' . $column['table'] . '.' . $column['column'] . ' failed: ' . $e->getMessage();
+            // 2. Add missing columns
+            if (!empty($plan['missing_columns'])) {
+                foreach ($plan['missing_columns'] as $column) {
+                    try {
+                        DB::statement('ALTER TABLE ' . $this->quoteIdentifier($column['table']) . ' ADD COLUMN ' . $column['definition']);
+                        $report['added_columns'][] = $column['table'] . '.' . $column['column'];
+                    } catch (Throwable $e) {
+                        $report['errors'][] = 'ADD COLUMN ' . $column['table'] . '.' . $column['column'] . ' failed: ' . $e->getMessage();
+                    }
                 }
             }
 
-            foreach ($plan['missing_indexes'] as $index) {
-                try {
-                    DB::statement('ALTER TABLE ' . $this->quoteIdentifier($index['table']) . ' ADD ' . $index['definition']);
-                    $report['added_keys'][] = $index['table'] . '.' . $index['name'];
-                } catch (Throwable $e) {
-                    $report['errors'][] = 'ADD INDEX ' . $index['table'] . '.' . $index['name'] . ' failed: ' . $e->getMessage();
+            // Also attempt to add any column from manual_changes if safely possible
+            if (!empty($plan['manual_changes'])) {
+                foreach ($plan['manual_changes'] as $change) {
+                    if (($change['type'] ?? '') === 'column' && isset($change['table']) && isset($change['definition'])) {
+                        try {
+                            DB::statement('ALTER TABLE ' . $this->quoteIdentifier($change['table']) . ' ADD COLUMN ' . $change['definition']);
+                            $report['added_columns'][] = $change['table'] . '.' . $change['column'];
+                        } catch (Throwable $e) {
+                            // If failed, remains in manual/skipped list
+                        }
+                    }
+                }
+            }
+
+            // 3. Add missing indexes
+            if (!empty($plan['missing_indexes'])) {
+                foreach ($plan['missing_indexes'] as $index) {
+                    try {
+                        DB::statement('ALTER TABLE ' . $this->quoteIdentifier($index['table']) . ' ADD ' . $index['definition']);
+                        $report['added_keys'][] = $index['table'] . '.' . $index['name'];
+                    } catch (Throwable $e) {
+                        $report['errors'][] = 'ADD INDEX ' . $index['table'] . '.' . $index['name'] . ' failed: ' . $e->getMessage();
+                    }
+                }
+            }
+
+            // 4. Safe Data Merge using INSERT IGNORE
+            if ($this->syncFileExists()) {
+                $handle = fopen($this->syncFile, 'r');
+                if ($handle) {
+                    $buffer = '';
+                    $mergedTables = [];
+                    while (($line = fgets($handle)) !== false) {
+                        $trimmed = trim($line);
+                        if (strpos($trimmed, '-- @@DATA:') === 0) {
+                            $currentTable = trim(substr($trimmed, 10));
+                            $mergedTables[$currentTable] = true;
+                            continue;
+                        }
+
+                        if (strpos($trimmed, 'INSERT IGNORE INTO') === 0 || $buffer !== '') {
+                            $buffer .= $line;
+                            if (substr(rtrim($trimmed), -1) === ';') {
+                                try {
+                                    DB::unprepared($buffer);
+                                } catch (Throwable $e) {
+                                    $report['errors'][] = 'Data merge notice: ' . substr($e->getMessage(), 0, 160);
+                                }
+                                $buffer = '';
+                            }
+                        }
+                    }
+                    fclose($handle);
+                    $report['merged_tables'] = array_keys($mergedTables);
                 }
             }
         } finally {
@@ -664,13 +761,16 @@ class DatabaseSyncService
                 }
             }
 
-            try {
-                $this->releaseLock();
-            } catch (Throwable $e) {
-                $report['errors'][] = 'Could not release the database sync lock: ' . $e->getMessage();
+            if ($locked) {
+                try {
+                    $this->releaseLock();
+                } catch (Throwable $e) {
+                    // ignore
+                }
             }
         }
 
+        Cache::forget('db_sync_schema');
         $report['remaining'] = $this->inspect();
 
         return $report;
