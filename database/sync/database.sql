@@ -2,7 +2,7 @@
 -- Ecommerce Full Database Backup & Sync File
 -- Contains table schemas, columns, indexes, and full table data.
 -- Ready for synchronization and safe merging on any server.
--- Exported at: 2026-11-27 01:25:39
+-- Exported at: 2026-11-27 01:27:50
 -- Engine: 10.11.16-MariaDB
 -- Tables: 100
 -- =============================================
@@ -84352,7 +84352,26 @@ INSERT IGNORE INTO `translations` (`id`, `lang`, `lang_key`, `lang_value`, `crea
 (27708, 'en', 'enable_size_measurement_chart_for_this_product', 'Enable Size Measurement Chart for this product', '2026-11-27 01:09:45', '2026-11-27 01:09:45'),
 (27709, 'en', 'measurement_image', 'Measurement Image', '2026-11-27 01:09:45', '2026-11-27 01:09:45'),
 (27710, 'en', 'or_upload_a_local_image_to_crop_accurately', 'Or upload a local image to crop accurately', '2026-11-27 01:09:45', '2026-11-27 01:09:45'),
-(27711, 'en', 'active_chart_preview', 'Active Chart Preview', '2026-11-27 01:09:45', '2026-11-27 01:09:45');
+(27711, 'en', 'active_chart_preview', 'Active Chart Preview', '2026-11-27 01:09:45', '2026-11-27 01:09:45'),
+(27712, 'en', 'database_backup__safe_synchronization', 'Database Backup & Safe Synchronization', '2026-11-27 01:26:12', '2026-11-27 01:26:12'),
+(27713, 'en', 'refresh_status', 'Refresh Status', '2026-11-27 01:26:12', '2026-11-27 01:26:12'),
+(27714, 'en', 'safe_schema__data_merging_tool', 'Safe Schema & Data Merging Tool', '2026-11-27 01:26:12', '2026-11-27 01:26:12'),
+(27715, 'en', 'this_tool_takes_a_complete_backup_of_your_mysql_database_into_databasesyncdatabasesql_when_you_run_safe_synchronize_on_any_server_or_local_setup_it_creates_any_missing_tables_or_columns_and_safely_merges_data_using_insert_ignore_existing_data_is_100_preserved_and_never_overwritten_or_deleted', 'This tool takes a complete backup of your MySQL database into database/sync/database.sql. When you run Safe Synchronize on any server or local setup, it creates any missing tables or columns and safely merges data using INSERT IGNORE. Existing data is 100% preserved and never overwritten or deleted.', '2026-11-27 01:26:12', '2026-11-27 01:26:12'),
+(27716, 'en', 'source_backup_file', 'Source Backup File', '2026-11-27 01:26:12', '2026-11-27 01:26:12'),
+(27717, 'en', 'target_file', 'Target file', '2026-11-27 01:26:12', '2026-11-27 01:26:12'),
+(27718, 'en', 'tables_in_backup', 'Tables in backup', '2026-11-27 01:26:12', '2026-11-27 01:26:12'),
+(27719, 'en', 'last_exported', 'Last exported', '2026-11-27 01:26:12', '2026-11-27 01:26:12'),
+(27720, 'en', 'take_full_database_backup_now_and_save_into_databasesyncdatabasesql', 'Take full database backup now and save into database/sync/database.sql?', '2026-11-27 01:26:12', '2026-11-27 01:26:12'),
+(27721, 'en', 'backup__export_database', 'Backup / Export Database', '2026-11-27 01:26:12', '2026-11-27 01:26:12'),
+(27722, 'en', 'exports_schema__full_data_to_databasesyncdatabasesql', 'Exports schema + full data to database/sync/database.sql', '2026-11-27 01:26:12', '2026-11-27 01:26:12'),
+(27723, 'en', 'target_database__merge', 'Target Database & Merge', '2026-11-27 01:26:12', '2026-11-27 01:26:12'),
+(27724, 'en', 'tables_in_database', 'Tables in database', '2026-11-27 01:26:12', '2026-11-27 01:26:12'),
+(27725, 'en', 'run_safe_sync__merge_now_missing_tables_columns_and_data_will_be_safely_created_and_merged_without_touching_existing_data', 'Run safe sync & merge now? Missing tables, columns, and data will be safely created and merged without touching existing data.', '2026-11-27 01:26:12', '2026-11-27 01:26:12'),
+(27726, 'en', 'run_safe_synchronize_merge_with_data', 'Run Safe Synchronize (Merge with Data)', '2026-11-27 01:26:12', '2026-11-27 01:26:12'),
+(27727, 'en', 'creates_missing_tablescolumns__merges_data_safely', 'Creates missing tables/columns & merges data safely', '2026-11-27 01:26:12', '2026-11-27 01:26:12'),
+(27728, 'en', 'the_target_database_contains_all_tables_and_columns_from_the_backup_schema_file_you_can_still_run_safe_merge_to_ensure_all_missing_records_are_populated', 'The target database contains all tables and columns from the backup schema file. You can still run safe merge to ensure all missing records are populated.', '2026-11-27 01:26:12', '2026-11-27 01:26:12'),
+(27729, 'en', 'rows', 'rows', '2026-11-27 01:27:47', '2026-11-27 01:27:47'),
+(27730, 'en', 'database_backup_and_sync_file_generated_successfully', 'Database backup and sync file generated successfully!', '2026-11-27 01:27:47', '2026-11-27 01:27:47');
 
 -- @@TABLE:uploads
 CREATE TABLE IF NOT EXISTS `uploads` (
