@@ -335,7 +335,14 @@ return response()->json([
                 $product_stock = $product->stocks->where('variant', $str)->first();
             }
             if ($product_stock == null) {
-                $product_stock = $product->stocks->where('variant', '')->first();
+                $product_stock = $product->stocks->where('variant', '')->first() ?: $product->stocks->first();
+            }
+            if ($product_stock == null && $product->current_stock > 0) {
+                $product_stock = (object)[
+                    'price' => $product->unit_price,
+                    'qty' => $product->current_stock,
+                    'sku' => $product->sku ?? ''
+                ];
             }
             if ($product_stock == null) {
                 return $errorResponse(0, $carts, 'frontend.partials.outOfStockCart');

@@ -442,6 +442,16 @@ class HomeController extends Controller
             $product_stock = $product->stocks->where('variant', '')->first() ?: $product->stocks->first();
         }
         if ($product_stock == null) {
+            if ($product->current_stock > 0) {
+                return array(
+                    'price' => single_price($product->unit_price * max(1, (int) $request->quantity)),
+                    'quantity' => $product->current_stock,
+                    'digital' => $product->digital,
+                    'variation' => $str,
+                    'max_limit' => $product->current_stock,
+                    'in_stock' => 1
+                );
+            }
             return array(
                 'price' => single_price($product->unit_price * max(1, (int) $request->quantity)),
                 'quantity' => 0,

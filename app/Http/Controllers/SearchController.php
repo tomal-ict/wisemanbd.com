@@ -68,8 +68,33 @@ class SearchController extends Controller
             // }
         }
 
-        if($min_price != null && $max_price != null){
-            $products->where('unit_price', '>=', $min_price)->where('unit_price', '<=', $max_price);
+        $now = time();
+        $effectivePriceSql = "CASE
+            WHEN (discount > 0 AND (discount_start_date IS NULL OR ($now >= discount_start_date AND $now <= discount_end_date))) THEN
+                CASE
+                    WHEN discount_type = 'percent' THEN ROUND(unit_price - (unit_price * discount / 100), 2)
+                    WHEN discount_type = 'amount' THEN ROUND(unit_price - discount, 2)
+                    ELSE unit_price
+                END
+            ELSE unit_price
+        END";
+
+        $rangeQuery = clone $products;
+        $range_min = floor((clone $rangeQuery)->selectRaw("MIN($effectivePriceSql) as min_p")->value('min_p') ?? 0);
+        $range_max = ceil((clone $rangeQuery)->selectRaw("MAX($effectivePriceSql) as max_p")->value('max_p') ?? 5000);
+
+        if ($range_min < 0) {
+            $range_min = 0;
+        }
+        if ($range_max <= $range_min) {
+            $range_max = $range_min + 1000;
+        }
+
+        if($min_price != null && is_numeric($min_price)){
+            $products->whereRaw("($effectivePriceSql) >= ?", [(float) $min_price]);
+        }
+        if($max_price != null && is_numeric($max_price)){
+            $products->whereRaw("($effectivePriceSql) <= ?", [(float) $max_price]);
         }
 
         if($query != null){
@@ -93,10 +118,10 @@ class SearchController extends Controller
                 $products->orderBy('created_at', 'asc');
                 break;
             case 'price-asc':
-                $products->orderBy('unit_price', 'asc');
+                $products->orderByRaw("($effectivePriceSql) ASC");
                 break;
             case 'price-desc':
-                $products->orderBy('unit_price', 'desc');
+                $products->orderByRaw("($effectivePriceSql) DESC");
                 break;
             default:
                 $products->orderBy('id', 'desc');
@@ -119,7 +144,7 @@ class SearchController extends Controller
 
         $products = filter_products($products)->with('taxes')->paginate(12)->appends(request()->query());
 
-        return view('frontend.product_listing', compact('products', 'query', 'category_id', 'brand_id', 'sort_by', 'seller_id','min_price', 'max_price', 'attributes', 'selected_attribute_values', 'colors', 'selected_color'));
+        return view('frontend.product_listing', compact('products', 'query', 'category_id', 'brand_id', 'sort_by', 'seller_id','min_price', 'max_price', 'attributes', 'selected_attribute_values', 'colors', 'selected_color', 'range_min', 'range_max'));
     }
 
     public function listing(Request $request)

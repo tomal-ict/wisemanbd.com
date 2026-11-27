@@ -93,43 +93,61 @@
                                     </div>
                                 </div>
                                 <div class="bg-white shadow-sm rounded mb-3">
-                                    <div class="fs-15 fw-600 p-3 border-bottom">
-                                        {{ translate('Price range')}}
+                                    <div class="fs-15 fw-600 p-3 border-bottom d-flex justify-content-between align-items-center">
+                                        <span>{{ translate('Price range')}}</span>
+                                        @if((isset($min_price) && $min_price !== '') || (isset($max_price) && $max_price !== ''))
+                                            <a href="javascript:void(0)" onclick="clearPriceFilter()" class="text-danger fs-12 font-weight-normal" style="text-decoration:none;">
+                                                <i class="las la-times"></i> {{ translate('Clear') }}
+                                            </a>
+                                        @endif
                                     </div>
                                     <div class="p-3">
                                         <div class="aiz-range-slider">
                                             <div
                                                 id="input-slider-range"
-                                                data-range-value-min="@if(\App\Models\Product::count() < 1) 0 @else {{ \App\Models\Product::min('unit_price') }} @endif"
-                                                data-range-value-max="@if(\App\Models\Product::count() < 1) 0 @else {{ \App\Models\Product::max('unit_price') }} @endif"
+                                                data-range-value-min="{{ $range_min ?? 0 }}"
+                                                data-range-value-max="{{ $range_max ?? 5000 }}"
                                             ></div>
 
-                                            <div class="row mt-2">
+                                            <div class="row mt-2 align-items-center">
                                                 <div class="col-6">
-                                                    <span class="range-slider-value value-low fs-14 fw-600 opacity-70"
-                                                        @if (isset($min_price))
-                                                            data-range-value-low="{{ $min_price }}"
-                                                        @elseif($products->min('unit_price') > 0)
-                                                            data-range-value-low="{{ $products->min('unit_price') }}"
-                                                        @else
-                                                            data-range-value-low="0"
-                                                        @endif
+                                                    <span class="range-slider-value value-low fs-13 fw-600 opacity-70"
+                                                        data-range-value-low="{{ (isset($min_price) && is_numeric($min_price)) ? (float)$min_price : ($range_min ?? 0) }}"
                                                         id="input-slider-range-value-low"
-                                                    ></span>
+                                                    >{{ single_price((isset($min_price) && is_numeric($min_price)) ? (float)$min_price : ($range_min ?? 0)) }}</span>
                                                 </div>
                                                 <div class="col-6 text-right">
-                                                    <span class="range-slider-value value-high fs-14 fw-600 opacity-70"
-                                                        @if (isset($max_price))
-                                                            data-range-value-high="{{ $max_price }}"
-                                                        @elseif($products->max('unit_price') > 0)
-                                                            data-range-value-high="{{ $products->max('unit_price') }}"
-                                                        @else
-                                                            data-range-value-high="0"
-                                                        @endif
+                                                    <span class="range-slider-value value-high fs-13 fw-600 opacity-70"
+                                                        data-range-value-high="{{ (isset($max_price) && is_numeric($max_price)) ? (float)$max_price : ($range_max ?? 5000) }}"
                                                         id="input-slider-range-value-high"
-                                                    ></span>
+                                                    >{{ single_price((isset($max_price) && is_numeric($max_price)) ? (float)$max_price : ($range_max ?? 5000)) }}</span>
                                                 </div>
                                             </div>
+                                        </div>
+
+                                        <!-- Manual Min/Max Price Inputs with Apply Button -->
+                                        <div class="mt-3 pt-2 border-top">
+                                            <div class="row gutters-5">
+                                                <div class="col-6">
+                                                    <div class="input-group input-group-sm">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text p-1 text-muted fs-11">৳</span>
+                                                        </div>
+                                                        <input type="number" id="min_price_input" class="form-control form-control-sm px-1 text-center" placeholder="{{ translate('Min') }}" value="{{ $min_price ?? '' }}" min="{{ $range_min ?? 0 }}" max="{{ $range_max ?? 5000 }}">
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="input-group input-group-sm">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text p-1 text-muted fs-11">৳</span>
+                                                        </div>
+                                                        <input type="number" id="max_price_input" class="form-control form-control-sm px-1 text-center" placeholder="{{ translate('Max') }}" value="{{ $max_price ?? '' }}" min="{{ $range_min ?? 0 }}" max="{{ $range_max ?? 5000 }}">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-primary btn-sm btn-block mt-2 font-weight-bold" onclick="applyPriceFilter()">
+                                                <i class="las la-filter mr-1"></i> {{ translate('Apply Price') }}
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -157,32 +175,6 @@
                                         </div>
                                     </div>
                                 @endforeach
-
-                                @if (get_setting('color_filter_activation'))
-                                    <div class="bg-white shadow-sm rounded mb-3">
-                                        <div class="fs-15 fw-600 p-3 border-bottom">
-                                            {{ translate('Filter by color')}}
-                                        </div>
-                                        <div class="p-3">
-                                            <div class="aiz-radio-inline">
-                                                @foreach ($colors as $key => $color)
-                                                <label class="aiz-megabox pl-0 mr-2" data-toggle="tooltip" data-title="{{ $color->name }}">
-                                                    <input
-                                                        type="radio"
-                                                        name="color"
-                                                        value="{{ $color->code }}"
-                                                        onchange="filter()"
-                                                        @if(isset($selected_color) && $selected_color == $color->code) checked @endif
-                                                    >
-                                                    <span class="aiz-megabox-elem rounded d-flex align-items-center justify-content-center p-1 mb-2">
-                                                        <span class="size-30px d-inline-block rounded" style="background: {{ $color->code }};"></span>
-                                                    </span>
-                                                </label>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
 
                                 {{-- <button type="submit" class="btn btn-styled btn-block btn-base-4">Apply filter</button> --}}
                             </div>
@@ -251,8 +243,8 @@
                                 </div>
                             </div>
                         </div>
-                        <input type="hidden" name="min_price" value="">
-                        <input type="hidden" name="max_price" value="">
+                        <input type="hidden" name="min_price" value="{{ $min_price ?? '' }}">
+                        <input type="hidden" name="max_price" value="{{ $max_price ?? '' }}">
                         <div class="row gutters-5 row-cols-xxl-4 row-cols-xl-4 row-cols-lg-4 row-cols-md-3 row-cols-2">
                             @foreach ($products as $key => $product)
                                 <div class="col">
@@ -272,16 +264,58 @@
 @endsection
 
 @section('script')
-
-  <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
     <script type="text/javascript">
         function filter(){
             $('#search-form').submit();
         }
-        function rangefilter(arg){
-            $('input[name=min_price]').val(arg[0]);
-            $('input[name=max_price]').val(arg[1]);
+
+        function applyPriceFilter(){
+            var minVal = $('#min_price_input').val();
+            var maxVal = $('#max_price_input').val();
+            $('input[name=min_price]').val(minVal);
+            $('input[name=max_price]').val(maxVal);
             filter();
         }
+
+        function clearPriceFilter(){
+            $('input[name=min_price]').val('');
+            $('input[name=max_price]').val('');
+            $('#min_price_input').val('');
+            $('#max_price_input').val('');
+            filter();
+        }
+
+        function rangefilter(arg){
+            var minVal = Math.round(parseFloat(arg[0]));
+            var maxVal = Math.round(parseFloat(arg[1]));
+            $('#min_price_input').val(minVal);
+            $('#max_price_input').val(maxVal);
+            $('input[name=min_price]').val(minVal);
+            $('input[name=max_price]').val(maxVal);
+            filter();
+        }
+
+        $(document).ready(function(){
+            var sliderElem = document.getElementById("input-slider-range");
+            if (sliderElem && sliderElem.noUiSlider) {
+                sliderElem.noUiSlider.on("update", function(values, handle) {
+                    var rounded = Math.round(parseFloat(values[handle]));
+                    if (handle === 0) {
+                        $('#input-slider-range-value-low').text('৳ ' + rounded);
+                        $('#min_price_input').val(rounded);
+                    } else {
+                        $('#input-slider-range-value-high').text('৳ ' + rounded);
+                        $('#max_price_input').val(rounded);
+                    }
+                });
+            }
+
+            $('#min_price_input, #max_price_input').on('keypress', function(e) {
+                if (e.which === 13) {
+                    e.preventDefault();
+                    applyPriceFilter();
+                }
+            });
+        });
     </script>
 @endsection

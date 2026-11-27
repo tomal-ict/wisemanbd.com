@@ -193,10 +193,8 @@
     cursor: grabbing;
     scroll-behavior: auto !important;
 }
-.wiseman-home .track.is-dragging .pcard {
-    pointer-events: none;
-}
 .wiseman-home .pcard {
+    cursor: pointer;
     color: var(--ink);
     background: #fff;
     border-radius: 4px;
@@ -227,6 +225,11 @@
     aspect-ratio: 1/1;
     background: #fdfdfd;
     overflow: hidden;
+}
+.wiseman-home .pimg a {
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 .wiseman-home .pimg img {
     width: 100%;
@@ -823,15 +826,15 @@
                                     || ($product->sizes != null && is_array(json_decode($product->sizes, true)) && count(json_decode($product->sizes, true)) > 0);
                                 $product_sizes = ($product->sizes != null && is_array(json_decode($product->sizes, true))) ? json_decode($product->sizes, true) : [];
                             @endphp
-                            <article class="pcard">
+                            <article class="pcard" data-url="{{ route('product', $product->slug) }}">
                                 <div class="pimg">
                                     <a href="{{ route('product', $product->slug) }}">
-                                        <img src="{{ uploaded_asset($product->thumbnail_img) }}" alt="{{ $product->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                        <img src="{{ uploaded_asset($product->thumbnail_img) }}" alt="{{ $product->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';" draggable="false">
                                     </a>
                                     @if($has_discount)
                                         <span class="badge-disc">{{ discount_in_percentage($product) }}% OFF</span>
                                     @endif
-                                    <button type="button" class="wish" onclick="addToWishList({{ $product->id }})" aria-label="Wishlist" title="{{ translate('Add to wishlist') }}">
+                                    <button type="button" class="wish" onclick="event.stopPropagation(); addToWishList({{ $product->id }})" aria-label="Wishlist" title="{{ translate('Add to wishlist') }}">
                                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
                                     </button>
                                 </div>
@@ -856,10 +859,10 @@
                                     </div>
                                 </div>
                                 <div class="actions">
-                                    <button type="button" class="cartbtn" onclick="addToCartDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})" aria-label="Add to cart" title="{{ translate('Add to cart') }}">
+                                    <button type="button" class="cartbtn" onclick="event.stopPropagation(); addToCartDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})" aria-label="Add to cart" title="{{ translate('Add to cart') }}">
                                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a1.6 1.6 0 0 0 1.6 1.3h8.2a1.6 1.6 0 0 0 1.6-1.2L21 8H6"/></svg>
                                     </button>
-                                    <button type="button" class="buy" onclick="buyNowDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})">Buy Now &rarr;</button>
+                                    <button type="button" class="buy" onclick="event.stopPropagation(); buyNowDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})">Buy Now &rarr;</button>
                                 </div>
                             </article>
                         @endforeach
@@ -929,15 +932,15 @@
                                     || ($product->sizes != null && is_array(json_decode($product->sizes, true)) && count(json_decode($product->sizes, true)) > 0);
                                 $product_sizes = ($product->sizes != null && is_array(json_decode($product->sizes, true))) ? json_decode($product->sizes, true) : [];
                             @endphp
-                            <article class="pcard">
+                            <article class="pcard" data-url="{{ route('product', $product->slug) }}">
                                 <div class="pimg">
                                     <a href="{{ route('product', $product->slug) }}">
-                                        <img src="{{ uploaded_asset($product->thumbnail_img) }}" alt="{{ $product->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                        <img src="{{ uploaded_asset($product->thumbnail_img) }}" alt="{{ $product->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';" draggable="false">
                                     </a>
                                     @if($has_discount)
                                         <span class="badge-disc">{{ discount_in_percentage($product) }}% OFF</span>
                                     @endif
-                                    <button type="button" class="wish" onclick="addToWishList({{ $product->id }})" aria-label="Wishlist">
+                                    <button type="button" class="wish" onclick="event.stopPropagation(); addToWishList({{ $product->id }})" aria-label="Wishlist">
                                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 0L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
                                     </button>
                                 </div>
@@ -962,10 +965,10 @@
                                     </div>
                                 </div>
                                 <div class="actions">
-                                    <button type="button" class="cartbtn" onclick="addToCartDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})" aria-label="Add to cart">
+                                    <button type="button" class="cartbtn" onclick="event.stopPropagation(); addToCartDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})" aria-label="Add to cart">
                                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a1.6 1.6 0 0 0 1.6 1.3h8.2a1.6 1.6 0 0 0 1.6-1.2L21 8H6"/></svg>
                                     </button>
-                                    <button type="button" class="buy" onclick="buyNowDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})">Buy Now &rarr;</button>
+                                    <button type="button" class="buy" onclick="event.stopPropagation(); buyNowDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})">Buy Now &rarr;</button>
                                 </div>
                             </article>
                         @endforeach
@@ -1001,15 +1004,15 @@
                                     || ($product->sizes != null && is_array(json_decode($product->sizes, true)) && count(json_decode($product->sizes, true)) > 0);
                                 $product_sizes = ($product->sizes != null && is_array(json_decode($product->sizes, true))) ? json_decode($product->sizes, true) : [];
                             @endphp
-                            <article class="pcard">
+                            <article class="pcard" data-url="{{ route('product', $product->slug) }}">
                                 <div class="pimg">
                                     <a href="{{ route('product', $product->slug) }}">
-                                        <img src="{{ uploaded_asset($product->thumbnail_img) }}" alt="{{ $product->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                        <img src="{{ uploaded_asset($product->thumbnail_img) }}" alt="{{ $product->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';" draggable="false">
                                     </a>
                                     @if($has_discount)
                                         <span class="badge-disc">{{ discount_in_percentage($product) }}% OFF</span>
                                     @endif
-                                    <button type="button" class="wish" onclick="addToWishList({{ $product->id }})" aria-label="Wishlist">
+                                    <button type="button" class="wish" onclick="event.stopPropagation(); addToWishList({{ $product->id }})" aria-label="Wishlist">
                                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 0L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
                                     </button>
                                 </div>
@@ -1034,10 +1037,10 @@
                                     </div>
                                 </div>
                                 <div class="actions">
-                                    <button type="button" class="cartbtn" onclick="addToCartDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})" aria-label="Add to cart">
+                                    <button type="button" class="cartbtn" onclick="event.stopPropagation(); addToCartDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})" aria-label="Add to cart">
                                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a1.6 1.6 0 0 0 1.6 1.3h8.2a1.6 1.6 0 0 0 1.6-1.2L21 8H6"/></svg>
                                     </button>
-                                    <button type="button" class="buy" onclick="buyNowDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})">Buy Now &rarr;</button>
+                                    <button type="button" class="buy" onclick="event.stopPropagation(); buyNowDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})">Buy Now &rarr;</button>
                                 </div>
                             </article>
                         @endforeach
@@ -1073,15 +1076,15 @@
                                     || ($product->sizes != null && is_array(json_decode($product->sizes, true)) && count(json_decode($product->sizes, true)) > 0);
                                 $product_sizes = ($product->sizes != null && is_array(json_decode($product->sizes, true))) ? json_decode($product->sizes, true) : [];
                             @endphp
-                            <article class="pcard">
+                            <article class="pcard" data-url="{{ route('product', $product->slug) }}">
                                 <div class="pimg">
                                     <a href="{{ route('product', $product->slug) }}">
-                                        <img src="{{ uploaded_asset($product->thumbnail_img) }}" alt="{{ $product->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                        <img src="{{ uploaded_asset($product->thumbnail_img) }}" alt="{{ $product->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';" draggable="false">
                                     </a>
                                     @if($has_discount)
                                         <span class="badge-disc">{{ discount_in_percentage($product) }}% OFF</span>
                                     @endif
-                                    <button type="button" class="wish" onclick="addToWishList({{ $product->id }})" aria-label="Wishlist">
+                                    <button type="button" class="wish" onclick="event.stopPropagation(); addToWishList({{ $product->id }})" aria-label="Wishlist">
                                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 0L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
                                     </button>
                                 </div>
@@ -1106,10 +1109,10 @@
                                     </div>
                                 </div>
                                 <div class="actions">
-                                    <button type="button" class="cartbtn" onclick="addToCartDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})" aria-label="Add to cart">
+                                    <button type="button" class="cartbtn" onclick="event.stopPropagation(); addToCartDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})" aria-label="Add to cart">
                                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a1.6 1.6 0 0 0 1.6 1.3h8.2a1.6 1.6 0 0 0 1.6-1.2L21 8H6"/></svg>
                                     </button>
-                                    <button type="button" class="buy" onclick="buyNowDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})">Buy Now &rarr;</button>
+                                    <button type="button" class="buy" onclick="event.stopPropagation(); buyNowDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})">Buy Now &rarr;</button>
                                 </div>
                             </article>
                         @endforeach
@@ -1151,15 +1154,15 @@
                                         || ($product->sizes != null && is_array(json_decode($product->sizes, true)) && count(json_decode($product->sizes, true)) > 0);
                                     $product_sizes = ($product->sizes != null && is_array(json_decode($product->sizes, true))) ? json_decode($product->sizes, true) : [];
                                 @endphp
-                                <article class="pcard">
+                                <article class="pcard" data-url="{{ route('product', $product->slug) }}">
                                     <div class="pimg">
                                         <a href="{{ route('product', $product->slug) }}">
-                                            <img src="{{ uploaded_asset($product->thumbnail_img) }}" alt="{{ $product->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';">
+                                            <img src="{{ uploaded_asset($product->thumbnail_img) }}" alt="{{ $product->getTranslation('name') }}" onerror="this.onerror=null;this.src='{{ static_asset('assets/img/placeholder.jpg') }}';" draggable="false">
                                         </a>
                                         @if($has_discount)
                                             <span class="badge-disc">{{ discount_in_percentage($product) }}% OFF</span>
                                         @endif
-                                        <button type="button" class="wish" onclick="addToWishList({{ $product->id }})" aria-label="Wishlist">
+                                        <button type="button" class="wish" onclick="event.stopPropagation(); addToWishList({{ $product->id }})" aria-label="Wishlist">
                                             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 0L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>
                                         </button>
                                     </div>
@@ -1184,10 +1187,10 @@
                                         </div>
                                     </div>
                                     <div class="actions">
-                                        <button type="button" class="cartbtn" onclick="addToCartDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})" aria-label="Add to cart">
+                                        <button type="button" class="cartbtn" onclick="event.stopPropagation(); addToCartDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})" aria-label="Add to cart">
                                             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.6 12.2a1.6 1.6 0 0 0 1.6 1.3h8.2a1.6 1.6 0 0 0 1.6-1.2L21 8H6"/></svg>
                                         </button>
-                                        <button type="button" class="buy" onclick="buyNowDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})">Buy Now &rarr;</button>
+                                        <button type="button" class="buy" onclick="event.stopPropagation(); buyNowDirect({{ $product->id }}, {{ $pb_has_options ? 'true' : 'false' }})">Buy Now &rarr;</button>
                                     </div>
                                 </article>
                             @endforeach
@@ -1322,13 +1325,22 @@
         var startX = 0;
         var scrollLeft = 0;
         var hasDragged = false;
+        var dragThreshold = 8;
+
+        // Prevent native browser image dragging inside track
+        slider.querySelectorAll('img').forEach(function(img){
+            img.setAttribute('draggable', 'false');
+            img.addEventListener('dragstart', function(e){ e.preventDefault(); });
+        });
 
         slider.addEventListener('mousedown', function(e){
             if (e.button !== 0) return;
+            // Let buttons and inputs handle their own clicks cleanly
+            if (e.target.closest('button, input, select, textarea, label')) return;
+
             isDown = true;
             hasDragged = false;
-            slider.classList.add('is-dragging');
-            startX = e.pageX - slider.offsetLeft;
+            startX = e.pageX;
             scrollLeft = slider.scrollLeft;
         });
 
@@ -1336,25 +1348,27 @@
             if (!isDown) return;
             isDown = false;
             slider.classList.remove('is-dragging');
+            setTimeout(function(){ hasDragged = false; }, 50);
         });
 
-        slider.addEventListener('mouseup', function(){
+        window.addEventListener('mouseup', function(){
             if (!isDown) return;
             isDown = false;
-            setTimeout(function(){
-                slider.classList.remove('is-dragging');
-            }, 60);
+            slider.classList.remove('is-dragging');
+            setTimeout(function(){ hasDragged = false; }, 50);
         });
 
         slider.addEventListener('mousemove', function(e){
             if(!isDown) return;
-            e.preventDefault();
-            var x = e.pageX - slider.offsetLeft;
-            var walk = (x - startX) * 1.6;
-            if (Math.abs(walk) > 5) {
+            var dx = e.pageX - startX;
+            if (!hasDragged && Math.abs(dx) > dragThreshold) {
                 hasDragged = true;
+                slider.classList.add('is-dragging');
             }
-            slider.scrollLeft = scrollLeft - walk;
+            if (hasDragged) {
+                e.preventDefault();
+                slider.scrollLeft = scrollLeft - dx;
+            }
         });
 
         slider.addEventListener('click', function(e){
@@ -1364,6 +1378,23 @@
                 hasDragged = false;
             }
         }, true);
+    });
+
+    // Allow clicking anywhere on a product card to navigate to the product page (unless clicking a button or link)
+    document.querySelectorAll('.wiseman-home .pcard').forEach(function(card){
+        card.addEventListener('click', function(e){
+            var parentTrack = card.closest('.track');
+            if (parentTrack && parentTrack.classList.contains('is-dragging')) {
+                return;
+            }
+            if (e.target.closest('button, a, input, select, label')) {
+                return;
+            }
+            var url = card.dataset.url;
+            if (url) {
+                window.location.href = url;
+            }
+        });
     });
 
     // Smooth scroll for remaining arrow carousels (if any)

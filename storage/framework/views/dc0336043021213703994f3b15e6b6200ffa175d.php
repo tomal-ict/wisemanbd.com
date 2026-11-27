@@ -776,7 +776,7 @@
                        if(parseInt(data.in_stock) == 0 && data.digital  == 0){
                            $('.buy-now').addClass('d-none');
                            $('.add-to-cart').addClass('d-none');
-                           $('.out-of-stock').addClass('d-none');
+                           $('.out-of-stock').removeClass('d-none');
                        }
                        else{
                            $('.buy-now').removeClass('d-none');
@@ -862,6 +862,7 @@
                 data: formData,
                 success: function(data){
                     if(data && data.status == 1){
+                        $('#addToCart-modal').modal('hide');
                         updateNavCart(data.nav_cart_view, data.cart_count);
                         guest_card(null, data.buy_now_cart_id);
                     }

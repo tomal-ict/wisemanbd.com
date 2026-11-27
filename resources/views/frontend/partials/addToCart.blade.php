@@ -138,6 +138,9 @@
                     foreach ($product->stocks as $key => $stock) {
                         $qty += $stock->qty;
                     }
+                    if ($qty == 0 && $product->current_stock > 0) {
+                        $qty = $product->current_stock;
+                    }
                 @endphp
 
                 <form id="option-choice-form">
