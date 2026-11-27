@@ -1063,6 +1063,11 @@
                                         </a>
                                     </li>
                                     <li class="aiz-side-nav-item">
+                                        <a href="{{route('pathao_configuration.index')}}" class="aiz-side-nav-link {{ areActiveRoutes(['pathao_configuration.index'])}}">
+                                            <span class="aiz-side-nav-text">{{translate('Pathao Configuration')}}</span>
+                                        </a>
+                                    </li>
+                                    <li class="aiz-side-nav-item">
                                         <a href="{{route('countries.index')}}" class="aiz-side-nav-link {{ areActiveRoutes(['countries.index','countries.edit','countries.update'])}}">
                                             <span class="aiz-side-nav-text">{{translate('Shipping Countries')}}</span>
                                         </a>

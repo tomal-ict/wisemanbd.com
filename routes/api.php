@@ -234,6 +234,18 @@ Route::group(['prefix' => 'v2', 'middleware' => ['app_language']], function() {
     Route::get('activated-social-login', 'Api\V2\ConfigController@activated_social_login');
 });
 
+// Pathao Courier Webhook Endpoint
+Route::any('pathao/webhook', function(\Illuminate\Http\Request $request) {
+    if ($request->input('event') === 'webhook_integration') {
+        return response()->json(['status' => 'verified'], 202)
+            ->header('X-Pathao-Merchant-Webhook-Integration-Secret', 'f3992ecc-59da-4cbe-a049-a13da2018d51');
+    }
+
+    \Log::info('Pathao Webhook Event: ' . json_encode($request->all()));
+
+    return response()->json(['status' => 'received'], 200);
+});
+
 Route::fallback(function() {
     return response()->json([
         'data' => [],

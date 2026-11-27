@@ -589,6 +589,10 @@ public function facebook_comment_update(Request $request)
         return view('backend.setup_configurations.shipping_configuration.index');
     }
 
+    public function pathao_configuration(Request $request){
+        return view('backend.setup_configurations.pathao_configuration');
+    }
+
     public function shipping_configuration_update(Request $request){
         if ($request->type == 'delivery_areas') {
             $areas = [];

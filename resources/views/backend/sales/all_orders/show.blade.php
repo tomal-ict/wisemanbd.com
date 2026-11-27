@@ -61,6 +61,10 @@
                 <input type="text" class="form-control" id="update_tracking_code" value="{{ $order->tracking_code }}">
             </div>
         </div>
+
+        {{-- Pathao Courier Card --}}
+        @include('backend.sales.partials.pathao_order_card')
+
         <div class="mb-3">
             @php
                                 $removedXML = '<?xml version="1.0" encoding="UTF-8"?>';

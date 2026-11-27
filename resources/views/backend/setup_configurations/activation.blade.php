@@ -623,6 +623,22 @@
             </div>
         </div>
     </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-0 h6 text-center">{{ translate('Pathao Courier Activation') }}</h3>
+            </div>
+            <div class="card-body text-center">
+                <label class="aiz-switch aiz-switch-success mb-0">
+                    <input type="checkbox" onchange="updateSettings(this, 'pathao_courier_activation')" <?php if(get_setting('pathao_courier_activation') == 1) echo "checked";?> >
+                    <span class="slider round"></span>
+                </label>
+                <div class="alert" style="color: #004085;background-color: #cce5ff;border-color: #b8daff;margin-bottom:0;margin-top:10px;">
+                    {{ translate('You need to configure Pathao Courier API correctly to enable this feature.') }} <a href="{{ route('pathao_configuration.index') }}">{{ translate('Configure Now') }}</a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <h4 class="text-center text-muted mt-4">{{translate('Social Media Login')}}</h4>

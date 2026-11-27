@@ -180,6 +180,12 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin']], function(
 
     Route::post('/bulk-order-status', 'OrderController@bulk_order_status')->name('bulk-order-status');
 
+    // Pathao Courier Routes
+    Route::post('/orders/send-to-pathao', 'PathaoController@sendToPathao')->name('orders.send_to_pathao');
+    Route::post('/pathao/track', 'PathaoController@track')->name('pathao.track');
+    Route::get('/pathao/zones', 'PathaoController@getZones')->name('pathao.zones');
+    Route::get('/pathao/areas', 'PathaoController@getAreas')->name('pathao.areas');
+
 
     // Pickup point orders
     Route::get('orders_by_pickup_point', 'OrderController@pickup_point_order_index')->name('pick_up_point.order_index');
@@ -341,6 +347,9 @@ Route::get('/sizes/destroy/{id}', 'AttributeController@destroy_size')->name('siz
     //Shipping Configuration
     Route::get('/shipping_configuration', 'BusinessSettingsController@shipping_configuration')->name('shipping_configuration.index');
     Route::post('/shipping_configuration/update', 'BusinessSettingsController@shipping_configuration_update')->name('shipping_configuration.update');
+
+    //Pathao Courier Configuration
+    Route::get('/pathao-configuration', 'BusinessSettingsController@pathao_configuration')->name('pathao_configuration.index');
 
     // Route::resource('pages', 'PageController');
     // Route::get('/pages/destroy/{id}', 'PageController@destroy')->name('pages.destroy');
