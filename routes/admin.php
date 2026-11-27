@@ -183,6 +183,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'admin']], function(
     // Pathao Courier Routes
     Route::post('/orders/send-to-pathao', 'PathaoController@sendToPathao')->name('orders.send_to_pathao');
     Route::post('/pathao/track', 'PathaoController@track')->name('pathao.track');
+    Route::get('/pathao/cities', 'PathaoController@getCities')->name('pathao.cities');
     Route::get('/pathao/zones', 'PathaoController@getZones')->name('pathao.zones');
     Route::get('/pathao/areas', 'PathaoController@getAreas')->name('pathao.areas');
 

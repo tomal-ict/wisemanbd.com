@@ -1,10 +1,8 @@
 @php
-    $pathao_activated = get_setting('pathao_courier_activation') == 1;
-    $shipping = json_decode($order->shipping_address);
     $pathaoService = app(\App\Services\PathaoService::class);
-    $defaultStoreId = $pathaoService->getDefaultStoreId();
-    $cities = $pathao_activated ? $pathaoService->getCities() : [];
-    $resolvedCityZone = $pathao_activated ? $pathaoService->resolveCityAndZone($shipping->city ?? '', $shipping->address ?? '') : ['city_id' => 1, 'zone_id' => 303];
+    $pathao_activated = $pathaoService->isActivated();
+    $is_sandbox = $pathaoService->isSandbox();
+    $shipping = json_decode($order->shipping_address);
 @endphp
 
 @if($pathao_activated)
@@ -19,10 +17,16 @@
                     <div>
                         <div class="d-flex align-items-center flex-wrap">
                             <h6 class="mb-0 font-weight-bold text-dark mr-2">Pathao Courier Service</h6>
+                            @if($is_sandbox)
+                                <span class="badge badge-inline badge-warning mr-1"><i class="las la-shield-alt"></i> Safe / Test Mode</span>
+                            @else
+                                <span class="badge badge-inline badge-primary mr-1"><i class="las la-broadcast-tower"></i> Live Real-Time</span>
+                            @endif
+
                             @if($order->pathao_consignment_id)
                                 <span class="badge badge-inline badge-success">{{ $order->pathao_order_status ?? 'Sent to Pathao' }}</span>
                             @else
-                                <span class="badge badge-inline badge-secondary">Not Dispatched</span>
+                                <span class="badge badge-inline badge-secondary">Ready to Send</span>
                             @endif
                         </div>
                         @if($order->pathao_consignment_id)
@@ -35,7 +39,11 @@
                             </div>
                         @else
                             <div class="text-muted fs-12 mt-1">
-                                Instant automated consignment dispatch directly to Pathao Courier.
+                                @if($is_sandbox)
+                                    Safe mode is active. Clicking send will register this order in Pathao Sandbox test environment.
+                                @else
+                                    Live mode is active. Clicking send will dispatch this order to Pathao live courier immediately.
+                                @endif
                             </div>
                         @endif
                     </div>
@@ -46,12 +54,16 @@
                     <button type="button" class="btn btn-sm btn-outline-info mr-1" onclick="trackPathaoConsignment('{{ $order->pathao_consignment_id }}')">
                         <i class="las la-search-location"></i> {{ translate('Track Order') }}
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#sendPathaoModal">
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#sendPathaoModal" title="{{ translate('Edit details or re-send') }}">
                         <i class="las la-sync"></i> {{ translate('Re-send') }}
                     </button>
                 @else
-                    <button type="button" class="btn btn-sm btn-danger px-3 font-weight-bold shadow-sm" data-toggle="modal" data-target="#sendPathaoModal">
-                        <i class="las la-paper-plane mr-1"></i> {{ translate('Send to Pathao Courier') }}
+                    <button type="button" class="btn btn-sm btn-danger px-3 font-weight-bold shadow-sm mr-1" id="btnDirectSendPathao" onclick="sendPathaoImmediately({{ $order->id }})">
+                        <span class="spinner-border spinner-border-sm d-none mr-1" id="directPathaoSpinner" role="status"></span>
+                        <i class="las la-paper-plane mr-1" id="directPathaoIcon"></i> {{ translate('Send to Pathao Now') }}
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-toggle="modal" data-target="#sendPathaoModal" title="{{ translate('Customize weight or address before sending') }}">
+                        <i class="las la-sliders-h"></i>
                     </button>
                 @endif
             </div>
@@ -75,8 +87,13 @@
                 @csrf
                 <input type="hidden" name="order_id" value="{{ $order->id }}">
                 <div class="modal-body p-4">
-                    <div class="alert alert-info py-2 fs-13 mb-3">
-                        <i class="las la-info-circle mr-1"></i> Order <strong>#{{ $order->code }}</strong> will be registered with Pathao Courier. A tracking consignment ID will be generated automatically.
+                    <div class="alert @if($is_sandbox) alert-warning @else alert-info @endif py-2 fs-13 mb-3">
+                        <i class="las la-info-circle mr-1"></i> 
+                        @if($is_sandbox)
+                            <strong>[Safe / Test Mode Active]</strong> Order <strong>#{{ $order->code }}</strong> will be registered with Pathao Sandbox.
+                        @else
+                            <strong>[Live Real-Time Active]</strong> Order <strong>#{{ $order->code }}</strong> will be dispatched to Pathao Courier in real-time.
+                        @endif
                     </div>
 
                     <div class="row gutters-10">
@@ -86,7 +103,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="font-weight-bold fs-12">{{ translate('Recipient Phone (11 digits)') }} <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="recipient_phone" value="{{ $pathaoService->formatPhone($shipping->phone ?? '') }}" required>
+                            <input type="text" class="form-control" name="recipient_phone" value="{{ preg_replace('/[^0-9]/', '', $shipping->phone ?? '') }}" required>
                         </div>
                         <div class="col-md-12 mb-3">
                             <label class="font-weight-bold fs-12">{{ translate('Delivery Address') }} <span class="text-danger">*</span></label>
@@ -94,18 +111,14 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="font-weight-bold fs-12">{{ translate('Pathao City') }} <span class="text-danger">*</span></label>
-                            <select class="form-control aiz-selectpicker" data-live-search="true" id="pathao_recipient_city" name="recipient_city" required>
-                                @foreach($cities as $c)
-                                    <option value="{{ $c['city_id'] }}" @if($c['city_id'] == $resolvedCityZone['city_id']) selected @endif>
-                                        {{ $c['city_name'] }}
-                                    </option>
-                                @endforeach
+                            <select class="form-control" id="pathao_recipient_city" name="recipient_city" required>
+                                <option value="1" selected>Dhaka (Default)</option>
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="font-weight-bold fs-12">{{ translate('Pathao Zone') }} <span class="text-danger">*</span></label>
                             <select class="form-control" id="pathao_recipient_zone" name="recipient_zone" required>
-                                <option value="{{ $resolvedCityZone['zone_id'] }}" selected>Selected Zone (ID: {{ $resolvedCityZone['zone_id'] }})</option>
+                                <option value="1" selected>Selected Zone</option>
                             </select>
                         </div>
                         <div class="col-md-4 mb-3">
@@ -170,6 +183,66 @@
 </div>
 
 <script type="text/javascript">
+    var pathaoCitiesLoaded = false;
+
+    function sendPathaoImmediately(orderId) {
+        var $btn = $('#btnDirectSendPathao');
+        var $spinner = $('#directPathaoSpinner');
+        var $icon = $('#directPathaoIcon');
+
+        $btn.prop('disabled', true);
+        $spinner.removeClass('d-none');
+        $icon.addClass('d-none');
+
+        $.ajax({
+            url: '{{ route("orders.send_to_pathao") }}',
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                order_id: orderId
+            },
+            success: function(res) {
+                $btn.prop('disabled', false);
+                $spinner.addClass('d-none');
+                $icon.removeClass('d-none');
+                if (res.success) {
+                    AIZ.plugins.notify('success', res.message);
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    AIZ.plugins.notify('danger', res.message || 'Failed to dispatch order');
+                }
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $spinner.addClass('d-none');
+                $icon.removeClass('d-none');
+                var msg = 'Error communicating with Pathao API.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    msg = xhr.responseJSON.message;
+                }
+                AIZ.plugins.notify('danger', msg);
+            }
+        });
+    }
+
+    function loadPathaoCities() {
+        if (pathaoCitiesLoaded) return;
+        $.get('{{ route("pathao.cities") }}', function(cities) {
+            if (cities && cities.length > 0) {
+                var $citySelect = $('#pathao_recipient_city');
+                $citySelect.empty();
+                $.each(cities, function(i, city) {
+                    var selected = (city.city_id == 1) ? 'selected' : '';
+                    $citySelect.append('<option value="' + city.city_id + '" ' + selected + '>' + city.city_name + '</option>');
+                });
+                pathaoCitiesLoaded = true;
+                loadPathaoZones(1, 1);
+            }
+        });
+    }
+
     function loadPathaoZones(cityId, selectedZoneId) {
         if (!cityId) return;
         $.get('{{ route("pathao.zones") }}', { city_id: cityId }, function(zones) {
@@ -177,7 +250,7 @@
             $zoneSelect.empty();
             if (zones && zones.length > 0) {
                 $.each(zones, function(i, zone) {
-                    var selected = (zone.zone_id == selectedZoneId) ? 'selected' : '';
+                    var selected = (selectedZoneId && zone.zone_id == selectedZoneId) ? 'selected' : '';
                     $zoneSelect.append('<option value="' + zone.zone_id + '" ' + selected + '>' + zone.zone_name + '</option>');
                 });
             } else {
@@ -187,11 +260,9 @@
     }
 
     $(document).ready(function() {
-        var initialCityId = $('#pathao_recipient_city').val();
-        var initialZoneId = '{{ $resolvedCityZone["zone_id"] }}';
-        if (initialCityId) {
-            loadPathaoZones(initialCityId, initialZoneId);
-        }
+        $('#sendPathaoModal').on('show.bs.modal', function() {
+            loadPathaoCities();
+        });
 
         $('#pathao_recipient_city').on('change', function() {
             loadPathaoZones($(this).val(), null);
@@ -216,7 +287,7 @@
                         $('#sendPathaoModal').modal('hide');
                         setTimeout(function() {
                             location.reload();
-                        }, 1200);
+                        }, 1000);
                     } else {
                         AIZ.plugins.notify('danger', res.message || 'Failed to dispatch order');
                     }

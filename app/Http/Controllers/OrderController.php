@@ -79,13 +79,11 @@ class OrderController extends Controller
     // All Orders
     public function all_orders(Request $request)
     {
-        CoreComponentRepository::instantiateShopRepository();
-
         $date = $request->date;
         $sort_search = null;
         $delivery_status = null;
 
-        $orders = Order::orderBy('id', 'desc');
+        $orders = Order::with(['orderDetails', 'user'])->orderBy('id', 'desc');
         if ($request->has('search')) {
             $sort_search = $request->search;
             $orders = $orders->where('code', 'like', '%' . $sort_search . '%');
@@ -104,9 +102,9 @@ class OrderController extends Controller
 
     public function all_orders_show($id)
     {
-        $order = Order::findOrFail(decrypt($id));
+        $order = Order::with(['orderDetails.product', 'user'])->findOrFail(decrypt($id));
         $order_shipping_address = json_decode($order->shipping_address);
-        $delivery_boys = User::where('city', $order_shipping_address->city)
+        $delivery_boys = User::where('city', optional($order_shipping_address)->city)
             ->where('user_type', 'delivery_boy')
             ->get();
 
@@ -116,14 +114,12 @@ class OrderController extends Controller
     // Inhouse Orders
     public function admin_orders(Request $request)
     {
-        CoreComponentRepository::instantiateShopRepository();
-
         $date = $request->date;
         $payment_status = null;
         $delivery_status = null;
         $sort_search = null;
         $admin_user_id = User::where('user_type', 'admin')->first()->id;
-        $orders = Order::orderBy('id', 'desc')
+        $orders = Order::with(['orderDetails', 'user'])->orderBy('id', 'desc')
                         ->where('seller_id', $admin_user_id);
 
         if ($request->payment_type != null) {
@@ -148,9 +144,9 @@ class OrderController extends Controller
 
     public function show($id)
     {
-        $order = Order::findOrFail(decrypt($id));
+        $order = Order::with(['orderDetails.product', 'user'])->findOrFail(decrypt($id));
         $order_shipping_address = json_decode($order->shipping_address);
-        $delivery_boys = User::where('city', $order_shipping_address->city)
+        $delivery_boys = User::where('city', optional($order_shipping_address)->city)
             ->where('user_type', 'delivery_boy')
             ->get();
 
@@ -162,7 +158,14 @@ class OrderController extends Controller
     // Seller Orders
     public function seller_orders(Request $request)
     {
-        CoreComponentRepository::instantiateShopRepository();
+        $date = $request->date;
+        $seller_id = $request->seller_id;
+        $payment_status = null;
+        $delivery_status = null;
+        $sort_search = null;
+        $admin_user_id = User::where('user_type', 'admin')->first()->id;
+        $orders = Order::with(['orderDetails', 'user'])->orderBy('code', 'desc')
+            ->where('orders.seller_id', '!=', $admin_user_id);
 
         $date = $request->date;
         $seller_id = $request->seller_id;
@@ -198,7 +201,7 @@ class OrderController extends Controller
 
     public function seller_orders_show($id)
     {
-        $order = Order::findOrFail(decrypt($id));
+        $order = Order::with(['orderDetails.product', 'user'])->findOrFail(decrypt($id));
         $order->viewed = 1;
         $order->save();
         return view('backend.sales.seller_orders.show', compact('order'));

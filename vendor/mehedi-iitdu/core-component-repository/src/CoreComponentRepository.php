@@ -7,10 +7,7 @@ use Cache;
 class CoreComponentRepository
 {
     public static function instantiateShopRepository() {
-        $url = $_SERVER['SERVER_NAME'];
-        $gate = "".$url;
-        $rn = self::serializeObjectResponse($gate);
-        self::finalizeRepository($rn);
+        return;
     }
 
     protected static function serializeObjectResponse($zn) {

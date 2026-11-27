@@ -97,6 +97,15 @@ class PathaoController extends Controller
     }
 
     /**
+     * Get City list
+     */
+    public function getCities(Request $request)
+    {
+        $cities = $this->pathaoService->getCities();
+        return response()->json($cities);
+    }
+
+    /**
      * Get Zones for City
      */
     public function getZones(Request $request)

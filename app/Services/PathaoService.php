@@ -34,12 +34,25 @@ class PathaoService
 
     public function isConfigured(): bool
     {
+        if ($this->sandbox) {
+            return true;
+        }
         return !empty($this->clientId) && !empty($this->clientSecret) && !empty($this->username) && !empty($this->password);
+    }
+
+    public function isSandbox(): bool
+    {
+        return $this->sandbox;
     }
 
     public function isActivated(): bool
     {
         return (bool) BusinessSetting::where('type', 'pathao_courier_activation')->value('value');
+    }
+
+    public function getHttpTimeout(): int
+    {
+        return $this->sandbox ? 25 : 10;
     }
 
     /**
@@ -52,13 +65,23 @@ class PathaoService
             return Cache::get($cacheKey);
         }
 
+        $timeout = $this->sandbox ? 30 : 10;
+        $url = $this->sandbox ? 'https://courier-api-sandbox.pathao.com' : 'https://api-hermes.pathao.com';
+
+        // In sandbox mode, use Pathao official test credentials
+        // In live mode, use merchant configured credentials
+        $clientId = $this->sandbox ? '7N1aMJQbWm' : $this->clientId;
+        $clientSecret = $this->sandbox ? 'wRcaibZkUdSNz2EI9ZyuXLlNrnAv0TdPUPXMnD39' : $this->clientSecret;
+        $username = $this->sandbox ? 'test@pathao.com' : $this->username;
+        $password = $this->sandbox ? 'lovePathao' : $this->password;
+
         try {
-            $response = Http::asJson()->acceptJson()->post($this->baseUrl . '/aladdin/api/v1/issue-token', [
-                'client_id' => $this->clientId,
-                'client_secret' => $this->clientSecret,
+            $response = Http::timeout($timeout)->asJson()->acceptJson()->post($url . '/aladdin/api/v1/issue-token', [
+                'client_id' => $clientId,
+                'client_secret' => $clientSecret,
                 'grant_type' => 'password',
-                'username' => $this->username,
-                'password' => $this->password,
+                'username' => $username,
+                'password' => $password,
             ]);
 
             if ($response->successful()) {
@@ -73,6 +96,8 @@ class PathaoService
             }
 
             Log::error('Pathao issue-token failed', [
+                'url' => $url,
+                'username' => $username,
                 'status' => $response->status(),
                 'body' => $response->body()
             ]);
@@ -94,7 +119,7 @@ class PathaoService
         }
 
         try {
-            $response = Http::withToken($token)->acceptJson()->get($this->baseUrl . '/aladdin/api/v1/stores');
+            $response = Http::timeout($this->getHttpTimeout())->withToken($token)->acceptJson()->get($this->baseUrl . '/aladdin/api/v1/stores');
             if ($response->successful()) {
                 return $response->json()['data']['data'] ?? [];
             }
@@ -110,6 +135,10 @@ class PathaoService
      */
     public function getDefaultStoreId(): int
     {
+        if ($this->sandbox) {
+            return 11; // Demo Store on Pathao sandbox
+        }
+
         if (is_numeric($this->storeId) && (int) $this->storeId > 0) {
             return (int) $this->storeId;
         }
@@ -149,7 +178,7 @@ class PathaoService
             if (!$token) return [];
 
             try {
-                $response = Http::withToken($token)->acceptJson()->get($this->baseUrl . '/aladdin/api/v1/city-list');
+                $response = Http::timeout($this->getHttpTimeout())->withToken($token)->acceptJson()->get($this->baseUrl . '/aladdin/api/v1/city-list');
                 if ($response->successful()) {
                     return $response->json()['data']['data'] ?? [];
                 }
@@ -171,7 +200,7 @@ class PathaoService
             if (!$token) return [];
 
             try {
-                $response = Http::withToken($token)->acceptJson()->get($this->baseUrl . "/aladdin/api/v1/cities/{$cityId}/zone-list");
+                $response = Http::timeout($this->getHttpTimeout())->withToken($token)->acceptJson()->get($this->baseUrl . "/aladdin/api/v1/cities/{$cityId}/zone-list");
                 if ($response->successful()) {
                     return $response->json()['data']['data'] ?? [];
                 }
@@ -193,7 +222,7 @@ class PathaoService
             if (!$token) return [];
 
             try {
-                $response = Http::withToken($token)->acceptJson()->get($this->baseUrl . "/aladdin/api/v1/zones/{$zoneId}/area-list");
+                $response = Http::timeout($this->getHttpTimeout())->withToken($token)->acceptJson()->get($this->baseUrl . "/aladdin/api/v1/zones/{$zoneId}/area-list");
                 if ($response->successful()) {
                     return $response->json()['data']['data'] ?? [];
                 }
@@ -313,10 +342,18 @@ class PathaoService
         $zoneId = $options['recipient_zone'] ?? null;
         $areaId = $options['recipient_area'] ?? null;
 
-        if (!$cityId || !$zoneId) {
+        if ($this->sandbox) {
+            $cityId = $cityId ?: 1;
+            $zoneId = $zoneId ?: 1;
+        } elseif (!$cityId || !$zoneId) {
             $resolved = $this->resolveCityAndZone($shipping->city ?? '', $address);
             $cityId = $cityId ?: $resolved['city_id'];
             $zoneId = $zoneId ?: $resolved['zone_id'];
+        }
+
+        $merchantOrderId = (string) $order->code;
+        if ($this->sandbox) {
+            $merchantOrderId .= '-' . time();
         }
 
         $amountToCollect = ($order->payment_status === 'paid') ? 0 : round($order->grand_total);
@@ -326,7 +363,7 @@ class PathaoService
 
         $payload = [
             'store_id' => (int) $storeId,
-            'merchant_order_id' => (string) $order->code,
+            'merchant_order_id' => $merchantOrderId,
             'recipient_name' => (string) ($shipping->name ?? 'Customer'),
             'recipient_phone' => (string) $phone,
             'recipient_address' => (string) $address,
@@ -346,7 +383,8 @@ class PathaoService
         }
 
         try {
-            $response = Http::withToken($token)
+            $response = Http::timeout($this->sandbox ? 25 : 10)
+                ->withToken($token)
                 ->acceptJson()
                 ->asJson()
                 ->post($this->baseUrl . '/aladdin/api/v1/orders', $payload);
@@ -364,13 +402,16 @@ class PathaoService
                 $order->tracking_code = $consignmentId;
                 $order->save();
 
+                $modeLabel = $this->sandbox ? '[Sandbox Mode]' : '[Live Mode]';
+
                 return [
                     'success' => true,
                     'consignment_id' => $consignmentId,
                     'delivery_fee' => $deliveryFee,
                     'order_status' => $orderStatus,
+                    'sandbox' => $this->sandbox,
                     'data' => $resData['data'],
-                    'message' => 'Order successfully sent to Pathao Courier! Consignment ID: ' . $consignmentId,
+                    'message' => "Order sent to Pathao {$modeLabel}! Consignment ID: {$consignmentId}",
                 ];
             }
 
@@ -413,7 +454,8 @@ class PathaoService
         }
 
         try {
-            $response = Http::withToken($token)
+            $response = Http::timeout($this->getHttpTimeout())
+                ->withToken($token)
                 ->acceptJson()
                 ->get($this->baseUrl . "/aladdin/api/v1/orders/{$consignmentId}/info");
 
@@ -429,9 +471,13 @@ class PathaoService
                 'message' => $response->json()['message'] ?? 'Unable to fetch tracking info',
             ];
         } catch (\Exception $e) {
+            $msg = $e->getMessage();
+            if (str_contains(strtolower($msg), 'timed out') || str_contains(strtolower($msg), 'timeout')) {
+                $msg = 'Pathao server took too long to respond (timeout). Please try again in a few moments.';
+            }
             return [
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => $msg,
             ];
         }
     }

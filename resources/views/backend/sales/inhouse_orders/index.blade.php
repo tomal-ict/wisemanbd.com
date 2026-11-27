@@ -110,6 +110,17 @@
                         @endif
 
                         <td class="text-right">
+                            @if(get_setting('pathao_courier_activation') == 1)
+                                @if($order->pathao_consignment_id)
+                                    <span class="btn btn-soft-success btn-icon btn-circle btn-sm" title="Pathao: {{ $order->pathao_consignment_id }} ({{ $order->pathao_order_status ?? 'Sent' }})">
+                                        <i class="las la-shipping-fast text-success"></i>
+                                    </span>
+                                @else
+                                    <a href="javascript:void(0);" class="btn btn-soft-danger btn-icon btn-circle btn-sm btn-send-pathao" data-id="{{ $order->id }}" data-code="{{ $order->code }}" title="{{ translate('Send to Pathao Courier') }}">
+                                        <i class="las la-paper-plane"></i>
+                                    </a>
+                                @endif
+                            @endif
                             <a class="btn btn-soft-primary btn-icon btn-circle btn-sm" href="{{route('inhouse_orders.show', encrypt($order->id))}}" title="{{ translate('View') }}">
                                 <i class="las la-eye"></i>
                             </a>
@@ -138,6 +149,35 @@
 
 @section('script')
     <script type="text/javascript">
+        $(document).on('click', '.btn-send-pathao', function() {
+            var $btn = $(this);
+            var orderId = $btn.data('id');
+            var code = $btn.data('code');
+            if (!confirm('Send Order #' + code + ' to Pathao Courier?')) {
+                return;
+            }
+            $btn.addClass('disabled').html('<span class="spinner-border spinner-border-sm" role="status"></span>');
+            $.post('{{ route("orders.send_to_pathao") }}', {
+                _token: '{{ csrf_token() }}',
+                order_id: orderId
+            }, function(res) {
+                if (res.success) {
+                    AIZ.plugins.notify('success', res.message);
+                    $btn.replaceWith('<span class="btn btn-soft-success btn-icon btn-circle btn-sm" title="Pathao: ' + res.consignment_id + '"><i class="las la-shipping-fast text-success"></i></span>');
+                } else {
+                    $btn.removeClass('disabled').html('<i class="las la-paper-plane"></i>');
+                    AIZ.plugins.notify('danger', res.message || 'Failed to dispatch order');
+                }
+            }).fail(function(xhr) {
+                $btn.removeClass('disabled').html('<i class="las la-paper-plane"></i>');
+                var msg = 'Failed to communicate with Pathao API.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    msg = xhr.responseJSON.message;
+                }
+                AIZ.plugins.notify('danger', msg);
+            });
+        });
+
         function sort_orders(el){
             $('#sort_orders').submit();
         }
